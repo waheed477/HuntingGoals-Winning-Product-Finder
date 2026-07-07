@@ -1,0 +1,18 @@
+{
+  "name": "hunting-goals",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pakistan's #1 Winning Product Hunter — monorepo root",
+  "scripts": {
+    "dev": "concurrently --names \"frontend,backend\" --prefix-colors \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "build": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:all": "npm run build && npm run build:backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
