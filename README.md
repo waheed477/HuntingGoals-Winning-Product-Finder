@@ -1,6 +1,7 @@
-# Hunting Goals — Pakistan's #1 Winning Product Hunter
+🎯 Hunting Goals — AI-Powered Winning Product Finder
 
-> Real-time Facebook & Instagram ad intelligence platform for Pakistani e-commerce sellers.
+> **Find winning products before your competitors.**  
+> Hunting Goals is a full-stack SaaS platform that analyzes real-time Facebook and Instagram ads to help Pakistani e-commerce sellers identify trending products with high profit potential.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20.x-green)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-18-blue)](https://reactjs.org)
@@ -8,143 +9,170 @@
 
 ---
 
-## Quick Start (3 Steps)
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔥 **Real-Time Ad Intelligence** | Scrapes Facebook & Instagram ads via Meta Ad Library |
+| 🏆 **Win Score Engine** | Proprietary algorithm based on 4+ real ad signals |
+| 🤖 **AI Product Analysis** | Groq AI generates profit estimates, ad copy (Urdu/English), and supplier links |
+| 📱 **Real-Time Alerts** | WhatsApp (Green API) and Email notifications when products cross thresholds |
+| 📊 **Seasonal Intelligence** | 650+ keywords across 5 seasons (Winter, Summer, Ramadan, Wedding, Back to School) |
+| 🔐 **Authentication** | JWT-based auth + Google OAuth with session persistence |
+| 🌓 **Dark/Light Mode** | User preference persists across sessions |
+| 📱 **Responsive UI** | Optimized for mobile, tablet, and desktop |
+| 📄 **GDPR Compliant** | Data export and deletion capabilities |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React 18 + Vite
+- Tailwind CSS
+- Recharts (data visualization)
+- Socket.io-client (real-time updates)
+- Leaflet (city maps)
+
+### Backend
+- Node.js + Express
+- MongoDB (Atlas / Local)
+- Puppeteer (ad scraping)
+- Groq AI (product analysis)
+- Socket.io (real-time events)
+- Nodemailer (email alerts)
+- Green API (WhatsApp alerts)
+
+### Deployment
+- Frontend: Netlify / Vercel
+- Backend: Hugging Face Spaces / Render
+- Database: MongoDB Atlas
+
+---
+
+## 🚀 Quick Start (3 Steps)
 
 ```bash
-# 1. Clone
-git clone https://github.com/waheed477/Hunting-Goals.git
-cd Hunting-Goals
+# 1. Clone the repository
+git clone https://github.com/waheed477/HuntingGoals-Winning-Product-Finder.git
+cd HuntingGoals-Winning-Product-Finder
 
 # 2. Install all dependencies
 npm run install:all
 
-# 3. Copy env file and fill in your values (all optional — app runs without them)
-cp .env.example backend/.env.local
-
-# 4. Run frontend + backend API
+# 3. Run the application
 npm run dev
+Access:
 
-# 5. (Optional) Run the socket server for real-time scraping in a second terminal
-cd backend && node socket-server.js
-```
+Frontend: http://localhost:5000
 
-| Service | URL | Required? |
-|---|---|---|
-| Frontend | http://localhost:5000 | ✅ Yes |
-| Backend API | http://localhost:3001/api/health | ✅ Yes |
-| Socket Server | http://localhost:3002 | Optional (real-time scraping) |
+Backend API: http://localhost:3001/api/health
 
-> **Zero-config start:** the app runs out of the box with in-memory MongoDB and a local AI fallback.  
-> Add `FB_SESSION_COOKIE` to `backend/.env.local` to enable live ad scraping, and `GROQ_API_KEY` for real AI analysis.
+⚙️ Environment Variables
+Create backend/.env.local with the following:
 
----
+env
+# Required
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/trendspy
+JWT_SECRET=your_super_secret_key_here
 
-## Project Structure
+# Optional (full features)
+GROQ_API_KEY=gsk_...                  # AI analysis
+FB_SESSION_COOKIE=c_user=...; xs=... # Live ad scraping
+EMAIL_USER=your_email@gmail.com      # Email alerts
+EMAIL_PASS=your_app_password         # Gmail app password
+GREEN_API_INSTANCE_ID=...            # WhatsApp alerts
+GREEN_API_TOKEN=...                  # WhatsApp alerts
+ADMIN_API_KEY=...                    # Admin access
+ALERTS_ENABLED=true                  # Enable alert system
+See backend/.env.example for a complete template.
 
-```
-Hunting-Goals/
-├── frontend/               # React 18 + Vite + Tailwind CSS
+📁 Project Structure
+text
+HuntingGoals-Winning-Product-Finder/
+├── backend/
+│   ├── server/          # Express server
+│   ├── models/          # Mongoose schemas
+│   ├── controllers/     # Route controllers
+│   ├── middleware/      # Auth, logging, rate limiting
+│   ├── services/        # Business logic
+│   ├── scrapers/        # Facebook/Instagram ad scrapers
+│   ├── jobs/            # Cron jobs (scraping, alerts, digests)
+│   └── Dockerfile       # Hugging Face deployment
+├── frontend/
 │   ├── src/
-│   │   ├── pages/          # Route-level components
-│   │   ├── components/     # Shared UI components
-│   │   ├── store/          # Zustand state management
-│   │   └── lib/            # API client, utilities
-│   ├── index.html
-│   ├── vite.config.js
+│   │   ├── pages/       # React pages
+│   │   ├── components/  # Reusable components
+│   │   ├── hooks/       # Custom React hooks
+│   │   ├── store/       # Zustand state management
+│   │   └── api/         # API service layer
+│   ├── public/          # Static assets
 │   └── package.json
-├── backend/                # Node.js + Express + Next.js API routes
-│   ├── app/api/            # Next.js API route handlers
-│   ├── models/             # Mongoose schemas
-│   ├── services/           # Business logic
-│   ├── scrapers/           # Facebook Ad Library scraper
-│   ├── jobs/               # Scheduled cron jobs
-│   ├── lib/                # DB, seed, utilities
-│   ├── middleware/         # Auth, rate-limiting
-│   ├── socket-server.js    # Socket.IO real-time server
-│   └── server.js           # Express entry point
-├── package.json            # Monorepo scripts (orchestrator)
-├── .env.example            # Environment variable reference
-├── .gitignore
+├── package.json         # Root scripts
 └── README.md
-```
+🌟 Key Features in Detail
+1. Win Score Engine
+Combines 4+ real ad signals to score products (0–100):
 
----
+Advertiser Diversity (40%) — Unique advertisers per product
 
-## Features
+Ad Volume (30%) — Total active ads
 
-| Feature | Description |
-|---|---|
-| 🔍 **Ad Spy** | Browse real Facebook & Instagram ads by category |
-| 🏆 **Winning Products** | AI-scored products ranked by win potential |
-| 📊 **Dashboard** | Live stats — total ads, trending categories, top winners |
-| 📈 **Trend Scores** | 30-day search-volume history per product |
-| 🤖 **AI Analyst** | Groq-powered product analysis (local fallback included) |
-| 🔔 **Alerts** | Email/SMS alerts when a product spikes |
-| 🗺️ **City Explorer** | Demand heatmap across Pakistan's major cities |
-| 📅 **Seasonal Trends** | Seasonal product calendar & warnings |
+Longevity (20%) — Maximum days running
 
----
+High Spend (10%) — Ads with "High" spend level
 
-## API Endpoints
+2. AI-Powered Product Analysis
+Generates:
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| GET | `/api/health` | — | Health check |
-| GET | `/api/products` | — | All tracked products |
-| GET | `/api/products/winning` | — | Top-scored products |
-| GET | `/api/products/:slug/history` | — | 30-day win-score history |
-| GET | `/api/ads` | — | Scraped ad library |
-| GET | `/api/dashboard/stats` | — | Dashboard KPIs |
-| POST | `/api/auth/register` | — | Create account |
-| POST | `/api/auth/login` | — | Get JWT token |
-| GET | `/api/user/profile` | JWT | User profile |
-| GET/POST | `/api/alerts` | JWT | Manage price alerts |
-| POST | `/api/ai/analyze` | JWT | AI product analysis |
-| GET | `/api/notifications` | JWT | User notifications |
+Profit calculator (buy price → sell price → margin)
 
----
+Ad copy in English and Roman Urdu
 
-## Tech Stack
+Supplier recommendations
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, Vite, Tailwind CSS, Zustand, React Query |
-| Backend | Node.js 20, Express, Next.js 14 API routes |
-| Database | MongoDB (in-memory dev / Atlas prod) |
-| Real-time | Socket.IO |
-| AI | Groq LLaMA (with local fallback) |
-| Scraping | Facebook Ad Library API |
+Seasonal relevance scores
 
----
+3. Real-Time Alerts
+WhatsApp: Instant notifications via Green API
 
-## Environment Variables
+Email: Daily digests and threshold alerts
 
-Copy `.env.example` → `backend/.env.local` for the backend, and set any `VITE_*` vars in `frontend/.env.local`.
+In-App: Notification bell with unread counts
 
-| Variable | Required | Description |
-|---|---|---|
-| `JWT_SECRET` | **Production** | Auth token signing — required in prod |
-| `MONGODB_URI` | Optional | Atlas URI; omit to use in-memory MongoDB |
-| `GROQ_API_KEY` | Optional | Enables real AI analysis (free tier available) |
-| `SOCKET_INTERNAL_SECRET` | Production | Internal auth between API and socket server |
+4. Ad Spy
+Browse real Facebook/Instagram ads
 
-Get a free Groq key at [console.groq.com](https://console.groq.com).
+Direct links to Meta Ad Library
 
----
+Competitor tracking and spend analysis
 
-## Development Scripts
+🧪 Testing
+bash
+# Run backend tests
+cd backend && npm test
 
-```bash
-npm run dev              # Run frontend + backend concurrently
-npm run dev:frontend     # Frontend only (port 5000)
-npm run dev:backend      # Backend only (port 3001)
-npm run install:all      # Install deps for root + frontend + backend
-npm run build            # Build frontend for production
-npm run build:all        # Build frontend + backend
-```
+# Run frontend tests
+cd frontend && npm test
+📄 License
+MIT © 2025 Waheed Aslam
 
----
+🤝 Contributing
+Pull requests are welcome. For major changes, please open an issue first.
 
-## License
+📬 Contact
+Email: waheeddd62@gmail.com
+GitHub: waheed477
 
-MIT © 2026 Hunting Goals
+🙏 Acknowledgments
+Meta Ad Library — Ad data source
+
+Groq — AI language model
+
+Green API — WhatsApp integration
+
+MongoDB Atlas — Cloud database
+
+text
