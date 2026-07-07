@@ -32,9 +32,8 @@
 ### Frontend
 - React 18 + Vite
 - Tailwind CSS
-- Recharts (data visualization)
 - Socket.io-client (real-time updates)
-- Leaflet (city maps)
+
 
 ### Backend
 - Node.js + Express
