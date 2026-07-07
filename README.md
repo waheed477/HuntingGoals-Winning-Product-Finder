@@ -23,7 +23,6 @@
 | 🔐 **Authentication** | JWT-based auth + Google OAuth with session persistence |
 | 🌓 **Dark/Light Mode** | User preference persists across sessions |
 | 📱 **Responsive UI** | Optimized for mobile, tablet, and desktop |
-| 📄 **GDPR Compliant** | Data export and deletion capabilities |
 
 ---
 
