@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  FiPackage, FiBell, FiTrendingUp, FiBarChart2,
+  FiPackage, FiTrendingUp, FiBarChart2,
   FiMapPin, FiRefreshCw, FiZap,
 } from 'react-icons/fi'
 import SeasonalBanner from '../components/SeasonalBanner.jsx'
@@ -17,12 +17,12 @@ const TABS = [
 ]
 
 const SEASONS = [
-  { id: null,            label: 'All Seasons', icon: '🌐' },
-  { id: 'winter',        label: 'Winter',      icon: '❄️' },
-  { id: 'summer',        label: 'Summer',      icon: '☀️' },
-  { id: 'ramadan',       label: 'Ramadan/Eid', icon: '🌙' },
-  { id: 'wedding',       label: 'Wedding',     icon: '💍' },
-  { id: 'backToSchool',  label: 'Back to School', icon: '🎒' },
+  { id: null,           label: 'All', icon: '🌐' },
+  { id: 'winter',       label: 'Winter', icon: '❄️' },
+  { id: 'summer',       label: 'Summer', icon: '☀️' },
+  { id: 'ramadan',      label: 'Ramadan', icon: '🌙' },
+  { id: 'wedding',      label: 'Wedding', icon: '💍' },
+  { id: 'backToSchool', label: 'School', icon: '🎒' },
 ]
 
 const STORAGE_KEY = 'trendspy_dashboard_tab'
@@ -47,76 +47,79 @@ async function fetchWinners(season, token) {
   return body.data
 }
 
-function StatCard({ icon: Icon, label, value, sub, color, bg }) {
+function StatCard({ icon: Icon, label, value, sub, accentColor }) {
   return (
-    <div className={`stat-card border ${bg}`}>
-      <div className="flex items-center gap-3 mb-2">
-        <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-          <Icon className={color} size={16} />
+    <div
+      className="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(200,245,66,0.06)]"
+    >
+      <div className="flex items-center gap-2.5">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: `${accentColor}18` }}
+        >
+          <Icon size={16} style={{ color: accentColor }} />
         </div>
-        <span className="text-sm text-gray-400">{label}</span>
+        <span className="font-mono-label text-[10px] text-[var(--color-moss)] uppercase tracking-[0.2em]">
+          {label}
+        </span>
       </div>
-      <p className="text-2xl font-bold text-white mb-0.5">{value}</p>
-      <p className="text-xs text-gray-500">{sub}</p>
+      <p className="font-display font-bold text-2xl text-[var(--color-bone)] tracking-tight">{value}</p>
+      <p className="font-mono-label text-[10px] text-[var(--color-moss)] truncate">{sub}</p>
     </div>
   )
 }
 
 const SPEND_STYLE = {
-  high:   'bg-green-500/15 text-green-400 border border-green-500/25',
-  medium: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/25',
-  low:    'bg-gray-500/15 text-gray-400 border border-gray-500/25',
+  high:   { backgroundColor: 'rgba(200,245,66,0.12)', color: 'var(--color-acid)', borderColor: 'rgba(200,245,66,0.25)' },
+  medium: { backgroundColor: 'rgba(200,245,66,0.06)', color: 'var(--color-acid-3)', borderColor: 'rgba(140,185,30,0.25)' },
+  low:    { backgroundColor: 'var(--color-ink-3)', color: 'var(--color-moss)', borderColor: 'var(--color-ink-4)' },
 }
 
-const SEASON_BADGE = {
-  winter:       'bg-blue-500/15 text-blue-400 border border-blue-500/25',
-  summer:       'bg-orange-500/15 text-orange-400 border border-orange-500/25',
-  ramadan:      'bg-purple-500/15 text-purple-400 border border-purple-500/25',
-  wedding:      'bg-pink-500/15 text-pink-400 border border-pink-500/25',
-  backToSchool: 'bg-teal-500/15 text-teal-400 border border-teal-500/25',
-  general:      'bg-gray-500/15 text-gray-400 border border-gray-500/25',
-}
-
-const SEASON_ICON = {
-  winter: '❄️', summer: '☀️', ramadan: '🌙',
-  wedding: '💍', backToSchool: '🎒', general: '🌐',
+const PLATFORM_STYLE = {
+  instagram: { backgroundColor: 'rgba(219,39,119,0.1)', color: '#f472b6', borderColor: 'rgba(219,39,119,0.25)' },
+  facebook:  { backgroundColor: 'rgba(59,130,246,0.1)', color: '#60a5fa', borderColor: 'rgba(59,130,246,0.25)' },
 }
 
 function WinnerRow({ product, rank }) {
-  const spendStyle  = SPEND_STYLE[product.spendLevel] || SPEND_STYLE.low
-  const seasonStyle = SEASON_BADGE[product.season]    || SEASON_BADGE.general
-  const seasonIcon  = SEASON_ICON[product.season]     || '🌐'
-  const isIg        = product.platform === 'instagram'
+  const spendStyle    = SPEND_STYLE[product.spendLevel] || SPEND_STYLE.low
+  const platformStyle = PLATFORM_STYLE[product.platform] || PLATFORM_STYLE.facebook
 
   return (
-    <div className="py-2.5 border-b border-white/5 last:border-0">
+    <div
+      className="py-2.5 border-b last:border-0"
+      style={{ borderColor: 'var(--color-ink-4)' }}
+    >
       <div className="flex items-start gap-2">
-        <span className="text-xs text-gray-600 w-5 text-center flex-shrink-0 mt-0.5">#{rank}</span>
+        <span className="font-mono-label text-[10px] text-[var(--color-ink-4)] w-5 text-center flex-shrink-0 mt-0.5">
+          #{rank}
+        </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-white font-medium leading-snug line-clamp-2 mb-1">
+          <p className="text-sm font-body font-medium text-[var(--color-bone)] leading-snug line-clamp-2 mb-1">
             {product.name}
           </p>
           <div className="flex items-center flex-wrap gap-1.5">
-            <span className="text-xs text-gray-500 truncate max-w-[110px]" title={product.advertiserName}>
+            <span
+              className="font-mono-label text-[9px] truncate max-w-[100px] text-[var(--color-moss)]"
+              title={product.advertiserName}
+            >
               {product.advertiserName}
             </span>
-            <span className="text-gray-700">·</span>
-            <span className="text-xs text-gray-500">{product.maxDaysRunning ?? product.daysRunning ?? 0}d</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${spendStyle}`}>
+            <span style={{ color: 'var(--color-ink-4)' }}>·</span>
+            <span className="font-mono-label text-[9px] text-[var(--color-moss)]">
+              {product.maxDaysRunning ?? product.daysRunning ?? 0}d
+            </span>
+            <span
+              className="font-mono-label text-[9px] px-1.5 py-0.5 rounded-full border"
+              style={spendStyle}
+            >
               {product.spendLevel || 'low'}
             </span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-              isIg
-                ? 'bg-pink-500/15 text-pink-400 border border-pink-500/25'
-                : 'bg-blue-500/15 text-blue-400 border border-blue-500/25'
-            }`}>
-              {isIg ? 'IG' : 'FB'}
+            <span
+              className="font-mono-label text-[9px] px-1.5 py-0.5 rounded-full border uppercase"
+              style={platformStyle}
+            >
+              {product.platform === 'instagram' ? 'IG' : 'FB'}
             </span>
-            {product.season && product.season !== 'general' && (
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${seasonStyle}`}>
-                {seasonIcon}
-              </span>
-            )}
           </div>
         </div>
       </div>
@@ -129,13 +132,16 @@ function CategoryBar({ name, count, max }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-400">{name}</span>
-        <span className="text-xs text-gray-600">{count} ads</span>
+        <span className="font-body text-xs text-[var(--color-smoke)]">{name}</span>
+        <span className="font-mono-label text-[9px] text-[var(--color-moss)]">{count} ads</span>
       </div>
-      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+      <div
+        className="h-1.5 rounded-full overflow-hidden"
+        style={{ backgroundColor: 'var(--color-ink-4)' }}
+      >
         <div
-          className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%` }}
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${pct}%`, backgroundColor: 'var(--color-acid)' }}
         />
       </div>
     </div>
@@ -144,7 +150,7 @@ function CategoryBar({ name, count, max }) {
 
 export default function Dashboard() {
   const user    = useStore((s) => s.user)
-  const [activeTab, setActiveTab]     = useState(() => localStorage.getItem(STORAGE_KEY) || 'local')
+  const [activeTab, setActiveTab]       = useState(() => localStorage.getItem(STORAGE_KEY) || 'local')
   const [activeSeason, setActiveSeason] = useState(null)
 
   const { data: stats, isLoading, isFetching, refetch } = useQuery({
@@ -166,24 +172,29 @@ export default function Dashboard() {
     localStorage.setItem(STORAGE_KEY, id)
   }
 
-  const winners       = winnersData?.products || stats?.topWinners || []
-  const topCategory   = stats?.trendingCategories?.[0]?.name || '—'
-  const maxCatCount   = stats?.trendingCategories?.[0]?.count || 1
-
-  // Season coverage counts for badge numbers
+  const winners        = winnersData?.products || stats?.topWinners || []
+  const topCategory    = stats?.trendingCategories?.[0]?.name || '—'
+  const maxCatCount    = stats?.trendingCategories?.[0]?.count || 1
   const seasonCoverage = winnersData?.seasonCoverage || {}
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-reveal">
+      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="section-title">Dashboard</h1>
-          <p className="section-subtitle">Pakistan e-commerce intelligence — local, global, and opportunity signals</p>
+          <p className="font-mono-label text-[10px] text-[var(--color-acid)] uppercase tracking-[0.3em] mb-1">
+            — Overview —
+          </p>
+          <h1 className="font-display font-bold text-2xl text-[var(--color-bone)] tracking-tight">Dashboard</h1>
+          <p className="font-body text-sm text-[var(--color-moss)] mt-0.5">
+            Pakistan e-commerce intelligence — local, global, and opportunity signals
+          </p>
         </div>
         <button
           onClick={() => { refetch(); refetchWinners() }}
           disabled={isFetching || winnersFetching}
-          className="p-2 bg-white/5 border border-white/10 text-gray-400 hover:text-white rounded-lg transition-all disabled:opacity-50"
+          className="p-2 rounded-lg transition-all disabled:opacity-50 text-[var(--color-moss)] hover:text-[var(--color-acid)] hover:bg-[var(--color-ink-3)]"
+          style={{ border: '1px solid var(--color-ink-4)' }}
           title="Refresh stats"
         >
           <FiRefreshCw size={14} className={(isFetching || winnersFetching) ? 'animate-spin' : ''} />
@@ -192,72 +203,82 @@ export default function Dashboard() {
 
       <SeasonalBanner />
 
-      {/* Quick Stats */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={FiPackage}
           label="Products Tracked"
           value={isLoading ? '—' : (stats?.totalProducts ?? 0).toLocaleString()}
           sub={stats?.totalAds ? `${stats.totalAds} ads in last 7 days` : 'Loading…'}
-          color="text-primary-400"
-          bg="bg-primary-500/10 border-primary-500/20"
+          accentColor="var(--color-acid)"
         />
         <StatCard
           icon={FiZap}
           label="Ads Scraped Today"
           value={isLoading ? '—' : (stats?.recentAdsToday ?? 0).toLocaleString()}
           sub="live from Facebook Ad Library"
-          color="text-accent-400"
-          bg="bg-accent-500/10 border-accent-500/20"
+          accentColor="#60a5fa"
         />
         <StatCard
           icon={FiTrendingUp}
           label="Top Category"
           value={isLoading ? '—' : topCategory}
-          sub={stats?.trendingCategories?.[0] ? `${stats.trendingCategories[0].count} ads · ${stats.trendingCategories[0].advertisers} advertisers` : 'Loading…'}
-          color="text-green-400"
-          bg="bg-green-500/10 border-green-500/20"
+          sub={stats?.trendingCategories?.[0] ? `${stats.trendingCategories[0].count} ads` : 'Loading…'}
+          accentColor="var(--color-acid-3)"
         />
         <StatCard
           icon={FiMapPin}
           label="Cities Active"
           value={isLoading ? '—' : (stats?.cityDemand?.length ?? 0).toString()}
           sub={stats?.cityDemand?.[0] ? `Most active: ${stats.cityDemand[0].city}` : 'city-tagged ads'}
-          color="text-orange-400"
-          bg="bg-orange-500/10 border-orange-500/20"
+          accentColor="#f97316"
         />
       </div>
 
-      {/* Winners + Categories + Cities row */}
+      {/* Winners + Categories + Cities */}
       {!isLoading && stats && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Today's Winners with Season Filter */}
+          {/* Winning Products */}
           <div className="glass-card p-4">
             <div className="flex items-center gap-2 mb-3">
-              <FiBarChart2 size={15} className="text-primary-400" />
-              <span className="text-sm font-medium text-gray-300">Winning Products</span>
-              {winnersFetching && <FiRefreshCw size={11} className="text-gray-600 animate-spin ml-auto" />}
+              <FiBarChart2 size={15} style={{ color: 'var(--color-acid)' }} />
+              <span className="font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em]">
+                Winning Products
+              </span>
+              {winnersFetching && (
+                <FiRefreshCw size={11} className="text-[var(--color-moss)] animate-spin ml-auto" />
+              )}
             </div>
 
             {/* Season filter pills */}
             <div className="flex flex-wrap gap-1.5 mb-3">
               {SEASONS.map((s) => {
-                const count = s.id ? (seasonCoverage[s.id] || 0) : null
+                const count    = s.id ? (seasonCoverage[s.id] || 0) : null
                 const isActive = activeSeason === s.id
                 return (
                   <button
                     key={s.id ?? 'all'}
                     onClick={() => setActiveSeason(s.id)}
-                    className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-medium transition-all duration-150 ${
-                      isActive
-                        ? 'bg-primary-600/30 border-primary-500/50 text-white'
-                        : 'bg-white/5 border-white/10 text-gray-500 hover:text-gray-300 hover:bg-white/10 hover:border-white/20'
-                    }`}
+                    className="flex items-center gap-1 font-mono-label text-[9px] px-2 py-0.5 rounded-full border transition-all duration-150 uppercase tracking-[0.1em]"
+                    style={isActive ? {
+                      backgroundColor: 'rgba(200,245,66,0.12)',
+                      borderColor: 'var(--color-acid-3)',
+                      color: 'var(--color-acid)',
+                    } : {
+                      backgroundColor: 'var(--color-ink-3)',
+                      borderColor: 'var(--color-ink-4)',
+                      color: 'var(--color-moss)',
+                    }}
                   >
                     <span>{s.icon}</span>
                     {s.label}
                     {count > 0 && (
-                      <span className="bg-white/10 rounded-full px-1 text-[9px] leading-none py-0.5">{count}</span>
+                      <span
+                        className="rounded-full px-1 text-[8px] leading-none py-0.5"
+                        style={{ backgroundColor: 'var(--color-ink-4)', color: 'var(--color-smoke)' }}
+                      >
+                        {count}
+                      </span>
                     )}
                   </button>
                 )
@@ -266,25 +287,29 @@ export default function Dashboard() {
 
             {winnersLoading ? (
               <div className="py-6 flex items-center justify-center">
-                <FiRefreshCw size={14} className="text-gray-600 animate-spin" />
+                <FiRefreshCw size={14} className="text-[var(--color-moss)] animate-spin" />
               </div>
             ) : winners.length > 0 ? (
               winners.slice(0, 8).map((p, i) => (
                 <WinnerRow key={p.id || p._id || i} product={p} rank={i + 1} />
               ))
             ) : (
-              <p className="text-xs text-gray-600 py-4 text-center">
-                No winners for this season yet — ads are scraped every 6 hours
+              <p className="font-mono-label text-[10px] text-[var(--color-moss)] py-4 text-center uppercase tracking-[0.15em]">
+                No winners yet — scraped every 6 hours
               </p>
             )}
           </div>
 
           {/* Trending Categories */}
           <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FiTrendingUp size={15} className="text-green-400" />
-              <span className="text-sm font-medium text-gray-300">Trending Categories</span>
-              <span className="ml-auto text-[10px] text-gray-600">last 7 days</span>
+            <div className="flex items-center gap-2 mb-4">
+              <FiTrendingUp size={15} style={{ color: 'var(--color-acid-3)' }} />
+              <span className="font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em]">
+                Trending Categories
+              </span>
+              <span className="ml-auto font-mono-label text-[9px] text-[var(--color-moss)] uppercase tracking-[0.1em]">
+                last 7 days
+              </span>
             </div>
             {stats.trendingCategories.length > 0 ? (
               <div className="space-y-3">
@@ -293,57 +318,81 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-600 py-4 text-center">No category data yet</p>
+              <p className="font-mono-label text-[10px] text-[var(--color-moss)] py-4 text-center uppercase tracking-[0.15em]">
+                No category data yet
+              </p>
             )}
           </div>
 
           {/* City Demand */}
           <div className="glass-card p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <FiMapPin size={15} className="text-orange-400" />
-              <span className="text-sm font-medium text-gray-300">City Demand</span>
-              <span className="ml-auto text-[10px] text-gray-600">tagged ads</span>
+            <div className="flex items-center gap-2 mb-4">
+              <FiMapPin size={15} style={{ color: '#f97316' }} />
+              <span className="font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em]">
+                City Demand
+              </span>
+              <span className="ml-auto font-mono-label text-[9px] text-[var(--color-moss)] uppercase tracking-[0.1em]">
+                tagged ads
+              </span>
             </div>
             {stats.cityDemand.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {stats.cityDemand.map((c) => (
-                  <div key={c.city} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{c.city}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div key={c.city} className="flex items-center justify-between gap-3">
+                    <span className="font-body text-xs text-[var(--color-smoke)] truncate">{c.city}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <div
+                        className="w-16 h-1.5 rounded-full overflow-hidden"
+                        style={{ backgroundColor: 'var(--color-ink-4)' }}
+                      >
                         <div
-                          className="h-full bg-orange-400/60 rounded-full"
-                          style={{ width: `${Math.round((c.count / (stats.cityDemand[0]?.count || 1)) * 100)}%` }}
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${Math.round((c.count / (stats.cityDemand[0]?.count || 1)) * 100)}%`,
+                            backgroundColor: '#f9731660',
+                          }}
                         />
                       </div>
-                      <span className="text-xs text-gray-600 w-8 text-right">{c.count}</span>
+                      <span className="font-mono-label text-[9px] text-[var(--color-moss)] w-6 text-right">{c.count}</span>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-gray-600 py-4 text-center">No city-tagged ads yet</p>
+              <p className="font-mono-label text-[10px] text-[var(--color-moss)] py-4 text-center uppercase tracking-[0.15em]">
+                No city-tagged ads yet
+              </p>
             )}
           </div>
         </div>
       )}
 
       {/* Tab navigation */}
-      <div className="flex items-end gap-1 border-b border-white/10">
+      <div
+        className="flex items-end gap-1 border-b"
+        style={{ borderColor: 'var(--color-ink-4)' }}
+      >
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
-            className={`flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium rounded-t-xl transition-all duration-200 ${
-              activeTab === tab.id
-                ? 'bg-primary-600/25 border border-b-0 border-primary-500/40 text-white'
-                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-            }`}
+            className="flex items-center gap-1.5 px-4 py-2.5 font-mono-label text-[10px] uppercase tracking-[0.15em] rounded-t-xl transition-all duration-200 border-b-0"
+            style={activeTab === tab.id ? {
+              backgroundColor: 'rgba(200,245,66,0.08)',
+              border: '1px solid var(--color-ink-4)',
+              borderBottom: 'none',
+              color: 'var(--color-acid)',
+            } : {
+              color: 'var(--color-moss)',
+            }}
           >
             <span>{tab.flag}</span>
             {tab.label}
             {activeTab === tab.id && (
-              <span className="w-1.5 h-1.5 bg-primary-400 rounded-full animate-pulse" />
+              <span
+                className="w-1.5 h-1.5 rounded-full pulse-dot"
+                style={{ backgroundColor: 'var(--color-acid)' }}
+              />
             )}
           </button>
         ))}
