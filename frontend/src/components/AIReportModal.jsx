@@ -55,7 +55,6 @@ export default function AIReportModal({ product, report, onClose }) {
 
   const adCopy    = report?.adCopy    || {}
   const suppliers = report?.suppliers || []
-  const intl      = report?.international || null
   const adGuide   = report?.adGuide   || null
 
   const topAdv      = product.topAdvertisers?.[0]
@@ -330,60 +329,6 @@ export default function AIReportModal({ product, report, onClose }) {
                   ? 'High competition — differentiate with price or faster delivery'
                   : 'Moderate competition — good entry opportunity'}
               </p>
-            </div>
-          </div>
-        )}
-
-        {/* ── International Opportunity ──────────────────────── */}
-        {intl && (
-          <div className="glass-card p-4 mb-4 border border-primary-500/20">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <FiZap className="text-accent-400" size={16} />
-                <span className="text-sm font-medium text-gray-300">International Opportunity</span>
-              </div>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                intl.opportunityGap === 'HIGH'
-                  ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                  : intl.opportunityGap === 'MEDIUM'
-                  ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                  : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-              }`}>
-                {intl.opportunityGap} GAP
-              </span>
-            </div>
-            <div className="space-y-2 mb-3">
-              <p className="text-xs text-gray-400">
-                Selling on <span className="text-white font-medium">{intl.globalStores}</span> Shopify stores globally
-              </p>
-              <p className="text-xs text-gray-400">
-                Global price: <span className="text-white font-medium">{intl.avgGlobalPrice}</span>
-                {intl.avgGlobalPricePKR > 0 && (
-                  <span className="text-gray-600"> · {formatPKR(intl.avgGlobalPricePKR)} in Pakistan</span>
-                )}
-              </p>
-              <p className="text-xs text-gray-400">
-                Shipping to Pakistan: <span className="text-white font-medium">{intl.shippingToPakistan}</span>
-              </p>
-              <p className="text-xs text-gray-400">
-                Local availability: <span className="text-white font-medium">{intl.localAvailability}</span> products in PK market
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-gray-500">Opportunity Score</span>
-                <span className="text-sm font-bold text-white">{intl.opportunityScore}/100</span>
-              </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    intl.opportunityScore >= 70 ? 'bg-gradient-to-r from-green-500 to-emerald-400'
-                    : intl.opportunityScore >= 40 ? 'bg-gradient-to-r from-yellow-500 to-amber-400'
-                    : 'bg-gradient-to-r from-gray-500 to-gray-400'
-                  }`}
-                  style={{ width: `${intl.opportunityScore}%` }}
-                />
-              </div>
             </div>
           </div>
         )}

@@ -5,7 +5,7 @@ import {
   FiTrash2, FiLock, FiRefreshCw, FiSave, FiChevronLeft, FiChevronRight,
   FiPlusCircle,
 } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
 import ChangePasswordModal from '../components/ChangePasswordModal.jsx'
 import DeleteAccountModal from '../components/DeleteAccountModal.jsx'

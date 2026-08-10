@@ -4,7 +4,7 @@ import { FiEye, FiImage, FiVideo, FiLayout, FiSliders, FiRefreshCw, FiWifi, FiUs
 import { CITIES, CATEGORIES } from '../utils/cityList.js'
 import { useAdsRealtime } from '../hooks/useAdsRealtime.js'
 import useStore from '../store/useStore.js'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 
 const CREATIVE_ICONS = {
   image:    FiImage,

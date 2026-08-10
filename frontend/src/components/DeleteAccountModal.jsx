@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiX, FiAlertTriangle, FiTrash2 } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import { useNavigate } from 'react-router-dom'
 import useStore from '../store/useStore.js'
 

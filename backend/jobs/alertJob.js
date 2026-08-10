@@ -1,9 +1,9 @@
 import cron from 'node-cron';
-import { checkAllProductsForAlerts } from '@/services/alertService';
+import { checkAllProductsForAlerts } from '../services/alertService.js';
 
 export function startAlertJob() {
-  if (process.env.ALERTS_ENABLED !== 'true') {
-    console.log('[AlertJob] Disabled — set ALERTS_ENABLED=true in Replit Secrets to enable.');
+  if (process.env.ALERTS_ENABLED === 'false') {
+    console.log('[AlertJob] Disabled via ALERTS_ENABLED=false.');
     return;
   }
 

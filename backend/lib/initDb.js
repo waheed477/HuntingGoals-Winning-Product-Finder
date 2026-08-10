@@ -7,8 +7,6 @@ import '@/models/TrendScore.js';
 import '@/models/ScrapedAd.js';
 import '@/models/SeasonalEvent.js';
 import '@/models/Supplier.js';
-import '@/models/GoogleShoppingProduct.js';
-import '@/models/ShopifyProduct.js';
 
 export async function initDb() {
   await connectDB();

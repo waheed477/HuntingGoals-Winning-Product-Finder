@@ -1,3 +1,6 @@
+// FIXED: Use VITE_API_URL environment variable for API calls
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 function normalizePlatform(p) {
   const map = { daraz: 'Daraz', olx: 'OLX', tiktok: 'TikTok', facebook: 'Facebook', instagram: 'Instagram' }
   return map[p?.toLowerCase()] || (p ? p.charAt(0).toUpperCase() + p.slice(1) : p)
@@ -25,7 +28,6 @@ export function normalizeProduct(p) {
     tiktokViews: p.tiktokViews || 0,
     slug: p.slug,
     isWinning: p.isWinning || false,
-    // Feature 6 & 7: data quality / confidence fields
     confidence: p.confidence || 'medium',
     confidenceScore: p.confidenceScore ?? 0,
     isVerified: p.isVerified ?? false,
@@ -40,7 +42,8 @@ export async function fetchProducts(city, category, minScore = 0) {
   if (city && city !== 'All') params.set('city', city)
   if (category && category !== 'All') params.set('category', category)
   if (minScore > 0) params.set('minScore', String(minScore))
-  const res = await fetch(`/api/products?${params}`)
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/products?${params}`)
   if (!res.ok) throw new Error('Failed to fetch products')
   const data = await res.json()
   if (!data.success) throw new Error(data.error || 'Failed to fetch products')
@@ -48,7 +51,8 @@ export async function fetchProducts(city, category, minScore = 0) {
 }
 
 export async function fetchTopProducts(limit = 10) {
-  const res = await fetch(`/api/products?limit=${limit}&sortBy=winScore`)
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/products?limit=${limit}&sortBy=winScore`)
   if (!res.ok) throw new Error('Failed to fetch products')
   const data = await res.json()
   if (!data.success) throw new Error(data.error || 'Failed to fetch products')
@@ -56,7 +60,8 @@ export async function fetchTopProducts(limit = 10) {
 }
 
 export async function fetchProductById(id) {
-  const res = await fetch(`/api/products?limit=100`)
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/products?limit=100`)
   if (!res.ok) throw new Error('Failed to fetch products')
   const data = await res.json()
   if (!data.success) throw new Error(data.error || 'Failed to fetch products')
@@ -69,7 +74,8 @@ export async function fetchProductById(id) {
 
 export async function fetchCityProducts(city) {
   const params = new URLSearchParams({ city, limit: '5', sortBy: 'winScore' })
-  const res = await fetch(`/api/products?${params}`)
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/products?${params}`)
   if (!res.ok) throw new Error('Failed to fetch products')
   const data = await res.json()
   if (!data.success) throw new Error(data.error || 'Failed to fetch products')

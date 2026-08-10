@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()

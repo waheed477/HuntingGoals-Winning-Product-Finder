@@ -1,11 +1,19 @@
-import { parse }  from 'url';
-import express    from 'express';
-import next       from 'next';
+import { parse }     from 'url';
+import http          from 'http';
+import express       from 'express';
+import next          from 'next';
 import { logRequest, logError }                                   from './middleware/logger.js';
 import { apiLimiter, authLimiter, scraperLimiter, aiLimiter }     from './middleware/rateLimit.js';
+import { corsAllowlist, getAllowedOrigins }                       from './lib/corsOrigins.js';
+import { initSocket }                                             from './lib/socketServer.js';
+import { startAutoScraper }                                       from './lib/autoScraper.js';
+import { startAllJobs }                                           from './lib/scheduler.js';
+import { startKeepAlive }                                         from './lib/keepAlive.js';
+import { verifyEmailTransport }                                   from './services/emailService.js';
 
 async function main() {
-  const dev = process.env.NODE_ENV !== 'production';
+  const dev  = process.env.NODE_ENV !== 'production';
+  const PORT = parseInt(process.env.PORT || '3001', 10);
 
   // ── MongoDB setup ─────────────────────────────────────────────────────────
   const atlasUri = process.env.MONGODB_URI;
@@ -17,7 +25,7 @@ async function main() {
     console.log('[server] ✅ Using MongoDB Atlas (persistent storage)');
   } else {
     if (process.env.NODE_ENV === 'production') {
-      console.error('[server] ❌ MONGODB_URI not set in production. Set it in Replit Secrets.');
+      console.error('[server] ❌ MONGODB_URI not set in production. Set it in your host environment (e.g. Render → Environment).');
       process.exit(1);
     }
     console.log('[server] No Atlas URI — starting in-memory MongoDB (dev mode, data resets on restart)...');
@@ -45,8 +53,16 @@ async function main() {
   const handle  = nextApp.getRequestHandler();
   await nextApp.prepare();
 
-  // ── Express wrapper (rate limiting + structured logging) ──────────────────
+  // ── Express wrapper (CORS + rate limiting + structured logging) ───────────
   const server = express();
+
+  // 0. CORS allow-list (FRONTEND_URL-driven; see lib/corsOrigins.js)
+  server.use(corsAllowlist);
+
+  // Ultra-light keep-alive endpoint for uptime pingers (Render free tier
+  // anti-spin-down). Registered BEFORE request logging and rate limiting so
+  // pings stay free and silent. No Next.js, no DB — instant response.
+  server.get('/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
   // 1. Structured request logging (all routes)
   server.use(logRequest);
@@ -70,8 +86,28 @@ async function main() {
   // 4. Express-level error handler
   server.use(logError);
 
-  server.listen(3001, '0.0.0.0', () => {
-    console.log('[server] ✅ Next.js running on http://localhost:3001');
+  // ── Single HTTP server: API + Socket.io on the same port ──────────────────
+  const httpServer = http.createServer(server);
+  initSocket(httpServer);
+
+  httpServer.listen(PORT, '0.0.0.0', () => {
+    console.log(`[server] ✅ API + Socket.io running on http://0.0.0.0:${PORT}`);
+    console.log(`[server] CORS allow-list: ${getAllowedOrigins().join(', ') || '(none — set FRONTEND_URL)'}`);
+
+    // All 10 cron jobs. NOTE: instrumentation.js (Next) does NOT run under a
+    // custom server, so the scheduler must be started from here — this is the
+    // only reliable runtime path. startAllJobs is idempotent; the old
+    // instrumentation call remains as a no-op fallback.
+    startAllJobs();
+
+    // Auto-scraper scheduler (enabled by default; AUTO_SCRAPER_ENABLED=false to opt out)
+    startAutoScraper();
+
+    // Anti-spin-down self-ping (no-op locally; active when RENDER_EXTERNAL_URL is set)
+    startKeepAlive();
+
+    // Non-blocking SMTP self-check — digests/alerts degrade loudly, not silently
+    verifyEmailTransport();
   });
 }
 

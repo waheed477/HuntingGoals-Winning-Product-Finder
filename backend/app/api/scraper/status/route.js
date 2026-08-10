@@ -1,13 +1,14 @@
-import axios from 'axios';
 import { connectDB } from '@/lib/db';
 import { ScrapedAd, Product, Supplier } from '@/models/index';
 
-const SOCKET_BASE = process.env.SOCKET_INTERNAL_URL || 'http://localhost:3002';
-
 export async function GET() {
   try {
-    const [schedulerRes, dbCounts] = await Promise.allSettled([
-      axios.get(`${SOCKET_BASE}/scheduler/status`, { timeout: 5000 }),
+    const [schedulerData, stats] = await Promise.allSettled([
+      (async () => {
+        const scheduler = globalThis.__trendspyScheduler;
+        if (!scheduler) return { scheduler: { enabled: false, startedAt: null }, nextRuns: {} };
+        return { scheduler: scheduler.getStatus(), nextRuns: scheduler.getNextRuns() };
+      })(),
       (async () => {
         await connectDB();
         const [totalAds, totalProducts, totalSuppliers] = await Promise.all([
@@ -19,23 +20,15 @@ export async function GET() {
       })(),
     ]);
 
-    const schedulerData =
-      schedulerRes.status === 'fulfilled'
-        ? schedulerRes.value.data
-        : { scheduler: { enabled: false, startedAt: null }, nextRuns: {} };
-
-    const stats =
-      dbCounts.status === 'fulfilled'
-        ? dbCounts.value
-        : { totalAds: 0, totalProducts: 0, totalSuppliers: 0 };
-
     return Response.json({
-      success: true,
-      scheduler: schedulerData.scheduler || {},
-      nextRuns:  schedulerData.nextRuns  || {},
-      stats,
+      success:   true,
+      scheduler: schedulerData.status === 'fulfilled' ? schedulerData.value.scheduler : {},
+      nextRuns:  schedulerData.status === 'fulfilled' ? schedulerData.value.nextRuns  : {},
+      stats:     stats.status === 'fulfilled'
+        ? stats.value
+        : { totalAds: 0, totalProducts: 0, totalSuppliers: 0 },
       environment: {
-        autoScraperEnabled: process.env.AUTO_SCRAPER_ENABLED === 'true',
+        autoScraperEnabled: process.env.AUTO_SCRAPER_ENABLED !== 'false',
       },
     });
   } catch (err) {

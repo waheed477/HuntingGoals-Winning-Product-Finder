@@ -1,4 +1,9 @@
 import useStore from '../store/useStore.js'
+import { normalizeBaseUrl } from './baseUrl.js'
+
+// FIXED: Use VITE_API_URL environment variable for API calls
+// Empty → same-origin (works with the Vite dev proxy / hosted rewrites)
+const API_BASE = normalizeBaseUrl(import.meta.env.VITE_API_URL)
 
 async function request(path, options = {}) {
   const token = useStore.getState().user?.token
@@ -7,9 +12,26 @@ async function request(path, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   }
-  const res = await fetch(`/api${path}`, { ...options, headers })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Request failed')
+
+  let res
+  try {
+    // FIXED: Added API_BASE prefix to all API calls
+    res = await fetch(`${API_BASE}/api${path}`, { ...options, headers })
+  } catch {
+    // Network-level failure (offline, DNS, server down) — friendly message;
+    // lib/toast.js also sanitizes, this just guarantees a clean origin string.
+    throw new Error('Cannot reach the server — please check your connection.')
+  }
+
+  let data
+  try {
+    data = await res.json()
+  } catch {
+    // Non-JSON response (proxy error page, HTML 5xx) — treat as server fault
+    throw new Error(res.ok ? 'Unexpected response from the server.' : `Server error (${res.status}) — please try again shortly.`)
+  }
+
+  if (!res.ok) throw new Error(data.error || 'Request failed — please try again.')
   return data
 }
 

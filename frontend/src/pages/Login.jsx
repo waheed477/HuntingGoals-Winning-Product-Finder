@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser, FiAlertCircle } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser, FiShield } from 'react-icons/fi'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
 
 function GoogleIcon() {
@@ -23,28 +23,24 @@ const GOOGLE_ERROR_MESSAGES = {
 }
 
 export default function Login() {
-  const [name, setName]                 = useState('')
-  const [email, setEmail]               = useState('')
-  const [password, setPassword]         = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading]       = useState(false)
+  const [name, setName]                   = useState('')
+  const [email, setEmail]                 = useState('')
+  const [password, setPassword]           = useState('')
+  const [showPassword, setShowPassword]   = useState(false)
+  const [isLoading, setIsLoading]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [isSignup, setIsSignup]         = useState(false)
-  const setUser  = useStore((s) => s.setUser)
-  const navigate = useNavigate()
+  const [isSignup, setIsSignup]           = useState(false)
+  const setUser   = useStore((s) => s.setUser)
+  const navigate  = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // Handle Google OAuth redirect back
   useEffect(() => {
     const googleStatus = searchParams.get('google')
     const token        = searchParams.get('token')
     const name         = searchParams.get('name')
     const error        = searchParams.get('error')
 
-    if (error) {
-      toast.error(GOOGLE_ERROR_MESSAGES[error] || 'Google sign-in failed.')
-      return
-    }
+    if (error) { toast.error(GOOGLE_ERROR_MESSAGES[error] || 'Google sign-in failed.'); return }
 
     if (googleStatus === 'success' && token) {
       const displayName = decodeURIComponent(name || '')
@@ -114,128 +110,174 @@ export default function Login() {
     }
   }
 
-  const handleGoogleSignIn = () => {
-    window.location.href = '/api/auth/google/start'
-  }
+  const handleGoogleSignIn = () => { window.location.href = '/api/auth/google/start' }
+
+  /* Input field style */
+  const inputClass = `
+    w-full font-body text-sm rounded-xl pl-10 pr-4 py-3 outline-none transition-all duration-200
+    bg-[var(--color-ink-3)] border text-[var(--color-bone)] placeholder:text-[var(--color-moss)]
+    border-[var(--color-ink-4)] focus:border-[var(--color-acid)] focus:ring-1 focus:ring-[var(--color-acid-3)]
+  `
 
   if (googleLoading) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-ink)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-400 text-sm">Signing you in with Google…</p>
+          <div
+            className="w-10 h-10 border-2 rounded-full animate-spin mx-auto mb-4"
+            style={{ borderColor: 'var(--color-ink-4)', borderTopColor: 'var(--color-acid)' }}
+          />
+          <p className="font-mono-label text-[10px] text-[var(--color-moss)] uppercase tracking-[0.2em]">
+            Signing you in with Google…
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[var(--color-ink)] gridlines-dark flex items-center justify-center p-4">
+      {/* Background glow */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, rgba(200,245,66,0.04) 0%, transparent 70%)' }}
+      />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm">HG</span>
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-6 group">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
+              style={{ backgroundColor: 'var(--color-acid)' }}
+            >
+              <span className="font-display font-bold text-sm text-[var(--color-ink)]">HG</span>
             </div>
-            <span className="font-bold text-white text-2xl tracking-tight">
-              Hunting<span className="gradient-text"> Goals</span>
+            <span className="font-display font-bold text-2xl tracking-tight text-[var(--color-bone)]">
+              Hunting<span className="text-[var(--color-acid)]"> Goals</span>
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="font-display font-bold text-2xl text-[var(--color-bone)] tracking-tight mb-1">
             {isSignup ? 'Create your account' : 'Welcome back'}
           </h1>
-          <p className="text-gray-400 text-sm">
+          <p className="font-body text-sm text-[var(--color-moss)]">
             {isSignup ? 'Start hunting winning products today' : "Pakistan's #1 product hunting tool"}
           </p>
         </div>
 
-        <div className="glass-card p-6 rounded-2xl">
+        {/* Card */}
+        <div
+          className="rounded-2xl p-6 border"
+          style={{ backgroundColor: 'var(--color-ink-2)', borderColor: 'var(--color-ink-4)' }}
+        >
           {/* Google Sign-In */}
           <button
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl text-white transition-all duration-200 mb-5 text-sm font-medium"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border text-sm font-body font-medium transition-all duration-200 mb-5"
+            style={{
+              backgroundColor: 'var(--color-ink-3)',
+              borderColor: 'var(--color-ink-4)',
+              color: 'var(--color-bone)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-smoke)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-4)' }}
           >
             <GoogleIcon />
             Continue with Google
           </button>
 
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs text-gray-500">or continue with email</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-ink-4)' }} />
+            <span className="font-mono-label text-[10px] text-[var(--color-moss)] uppercase tracking-[0.15em]">
+              or email
+            </span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-ink-4)' }} />
           </div>
 
-          {/* Email/Password Form */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignup && (
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Full Name</label>
+                <label className="block font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em] mb-1.5">
+                  Full Name
+                </label>
                 <div className="relative">
-                  <FiUser size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                  <FiUser size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-moss)]" />
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Your full name"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-primary-500/50 text-sm"
+                    className={inputClass}
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-xs text-gray-400 mb-1.5">Email Address</label>
+              <label className="block font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em] mb-1.5">
+                Email Address
+              </label>
               <div className="relative">
-                <FiMail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <FiMail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-moss)]" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-primary-500/50 text-sm"
+                  className={inputClass}
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs text-gray-400">Password</label>
+                <label className="font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em]">
+                  Password
+                </label>
                 {!isSignup && (
-                  <Link to="/forgot-password" className="text-xs text-primary-400 hover:text-primary-300 transition-colors">
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-body text-[var(--color-moss)] hover:text-[var(--color-acid)] transition-colors"
+                  >
                     Forgot password?
                   </Link>
                 )}
               </div>
               <div className="relative">
-                <FiLock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                <FiLock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-moss)]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-primary-500/50 text-sm"
+                  className={`${inputClass} pr-10`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--color-moss)] hover:text-[var(--color-smoke)] transition-colors"
                 >
                   {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
                 </button>
               </div>
               {isSignup && (
-                <p className="text-xs text-gray-600 mt-1">Minimum 6 characters</p>
+                <p className="text-xs text-[var(--color-moss)] font-body mt-1">Minimum 6 characters</p>
               )}
             </div>
 
+            {/* Submit button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl font-medium text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="btn-shine w-full py-3 font-display font-bold text-sm rounded-xl transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(200,245,66,0.25)]"
+              style={{ backgroundColor: 'var(--color-acid)', color: 'var(--color-ink)' }}
             >
               {isLoading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span
+                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{ borderColor: 'rgba(15,17,10,0.3)', borderTopColor: 'var(--color-ink)' }}
+                />
               ) : (
                 <>
                   {isSignup ? 'Create Account' : 'Sign In'}
@@ -245,23 +287,27 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-5 pt-5 border-t border-white/5 text-center">
+          {/* Toggle */}
+          <div
+            className="mt-5 pt-5 border-t text-center"
+            style={{ borderColor: 'var(--color-ink-4)' }}
+          >
             <button
               onClick={() => { setIsSignup(!isSignup); setName('') }}
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm font-body text-[var(--color-moss)] hover:text-[var(--color-bone)] transition-colors"
             >
               {isSignup ? (
-                <>Already have an account? <span className="text-primary-400">Sign in</span></>
+                <>Already have an account? <span className="text-[var(--color-acid)] font-medium">Sign in</span></>
               ) : (
-                <>Don't have an account? <span className="text-primary-400">Sign up free</span></>
+                <>Don't have an account? <span className="text-[var(--color-acid)] font-medium">Sign up free</span></>
               )}
             </button>
           </div>
         </div>
 
         {/* Security note */}
-        <p className="text-center text-xs text-gray-600 mt-4 flex items-center justify-center gap-1.5">
-          <FiAlertCircle size={11} />
+        <p className="text-center font-mono-label text-[10px] text-[var(--color-moss)] uppercase tracking-[0.15em] mt-4 flex items-center justify-center gap-1.5">
+          <FiShield size={11} />
           Your data is encrypted and never shared
         </p>
       </div>

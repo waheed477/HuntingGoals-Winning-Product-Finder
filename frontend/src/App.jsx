@@ -53,6 +53,12 @@ export default function App() {
             border: '1px solid rgba(255,255,255,0.15)',
             borderRadius: '12px',
           },
+          success: {
+            iconTheme: { primary: '#22c55e', secondary: '#0f2e1a' },
+          },
+          error: {
+            iconTheme: { primary: '#f43f5e', secondary: '#1e1e3f' },
+          },
         }}
       />
       <Routes>

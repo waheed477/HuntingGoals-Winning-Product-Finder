@@ -14,9 +14,10 @@ export const POST = withAuth(async (request, context, user) => {
       return Response.json({ success: false, error: 'Admin access required' }, { status: 403 });
     }
 
-    if (process.env.SUPPLIER_SCRAPER_ENABLED !== 'true') {
+    // Enabled by default; set SUPPLIER_SCRAPER_ENABLED=false to opt out
+    if (process.env.SUPPLIER_SCRAPER_ENABLED === 'false') {
       return Response.json(
-        { success: false, error: 'Supplier scraper is disabled. Set SUPPLIER_SCRAPER_ENABLED=true' },
+        { success: false, error: 'Supplier discovery is currently disabled by the administrator.' },
         { status: 503 }
       );
     }

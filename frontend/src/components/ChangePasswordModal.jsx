@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiX, FiLock, FiEye, FiEyeOff, FiCheck } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
 
 export default function ChangePasswordModal({ onClose }) {

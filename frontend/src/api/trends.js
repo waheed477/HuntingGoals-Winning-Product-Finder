@@ -1,8 +1,12 @@
+// FIXED: Use VITE_API_URL environment variable for API calls
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 import { subDays, format } from 'date-fns'
 
 async function fetchAllProductsRaw(limit = 20) {
   try {
-    const res = await fetch(`/api/products?limit=${limit}&sortBy=winScore`)
+    // FIXED: Added API_BASE prefix
+    const res = await fetch(`${API_BASE}/api/products?limit=${limit}&sortBy=winScore`)
     if (!res.ok) return []
     const data = await res.json()
     return data.success ? (data.data?.products || []) : []
@@ -18,7 +22,8 @@ export async function fetchAllTrends(range = 30) {
   const results = await Promise.all(
     products.map(async (p) => {
       try {
-        const res = await fetch(`/api/trends/${p._id}?days=${range}`)
+        // FIXED: Added API_BASE prefix
+        const res = await fetch(`${API_BASE}/api/trends/${p._id}?days=${range}`)
         if (!res.ok) return null
         const data = await res.json()
         if (!data.success) return null
@@ -93,7 +98,8 @@ export async function fetchRisingFalling() {
 
 export async function fetchTrends(productId, range = 30) {
   try {
-    const res = await fetch(`/api/trends/${productId}?days=${range}`)
+    // FIXED: Added API_BASE prefix
+    const res = await fetch(`${API_BASE}/api/trends/${productId}?days=${range}`)
     if (!res.ok) return null
     const data = await res.json()
     if (!data.success) return null

@@ -23,8 +23,8 @@ const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours
 export async function autoCorrectProducts() {
   await connectDB();
 
-  if (process.env.AUTO_CORRECT_ENABLED !== 'true') {
-    console.log('[AutoCorrect] Skipped — AUTO_CORRECT_ENABLED is not true');
+  if (process.env.AUTO_CORRECT_ENABLED === 'false') {
+    console.log('[AutoCorrect] Skipped — disabled via AUTO_CORRECT_ENABLED=false');
     return { fixed: 0, skipped: 0 };
   }
 
@@ -110,12 +110,8 @@ export async function autoCorrectProducts() {
  * Start the auto-correct cron job (every 12 hours).
  */
 export function startAutoCorrectJob() {
-  if (process.env.CRON_ENABLED !== 'true') {
-    console.log('[AutoCorrectJob] Skipped — CRON_ENABLED is not true');
-    return;
-  }
-
-  cron.schedule('0 */12 * * *', async () => {
+  // :47 past — staggered from the other 12-hour jobs (trend :00, fbAds :17, international :31)
+  cron.schedule('47 */12 * * *', async () => {
     console.log(`[${new Date().toISOString()}] [AutoCorrectJob] Running…`);
     try {
       await autoCorrectProducts();
@@ -124,7 +120,7 @@ export function startAutoCorrectJob() {
     }
   });
 
-  console.log('[AutoCorrectJob] Scheduled — every 12 hours');
+  console.log('[AutoCorrectJob] Scheduled — every 12 hours at :47');
 }
 
 export default { startAutoCorrectJob, autoCorrectProducts };

@@ -1,12 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { io } from 'socket.io-client'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
+import { normalizeBaseUrl } from '../lib/baseUrl.js'
 
 let _socket = null
 let _token  = null
 
 function getSharedSocket(token) {
+  // Socket.io runs on the SAME origin as the API (single backend process/port).
+  // VITE_SOCKET_URL remains only as an optional override; normally VITE_API_URL
+  // is the right (and only) value to set, and in dev both fall back to same-origin.
+  const API_BASE = normalizeBaseUrl(import.meta.env.VITE_API_URL || import.meta.env.VITE_SOCKET_URL)
+
   if (_socket && _token === token && (_socket.connected || _socket.connecting)) {
     return _socket
   }
@@ -15,7 +21,8 @@ function getSharedSocket(token) {
     _socket = null
   }
   _token  = token
-  _socket = io('/', {
+  // ✅ Connect to the actual backend URL (HF) in production, or same-origin in dev
+  _socket = io(API_BASE || undefined, {
     path: '/socket.io',
     auth: { token },
     transports: ['websocket', 'polling'],

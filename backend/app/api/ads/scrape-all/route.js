@@ -1,15 +1,18 @@
-import axios from 'axios';
-
-const SOCKET_BASE_URL = process.env.SOCKET_INTERNAL_URL  || 'http://localhost:3002';
-const SOCKET_SECRET   = process.env.SOCKET_INTERNAL_SECRET || 'trendspy-socket-internal';
-
+/**
+ * POST /api/ads/scrape-all — start the full FB Ads scrape cycle in the
+ * background (previously delegated to the standalone socket server; now
+ * runs in-process via the auto-scraper registry).
+ */
 export async function POST() {
   try {
-    await axios.post(
-      `${SOCKET_BASE_URL}/internal/run-fb-job`,
-      {},
-      { headers: { 'x-internal-secret': SOCKET_SECRET }, timeout: 5000 }
-    );
+    const scheduler = globalThis.__trendspyScheduler;
+    if (!scheduler) {
+      return Response.json({ success: false, error: 'Scheduler not initialized yet' }, { status: 503 });
+    }
+
+    // Fire-and-forget — returns immediately, job runs in background
+    scheduler.runFacebookAdsJob();
+
     return Response.json({ success: true, message: 'Scrape job started' });
   } catch (err) {
     console.error('[POST /api/ads/scrape-all]', err.message);

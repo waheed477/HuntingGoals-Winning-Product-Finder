@@ -8,7 +8,7 @@ import cron from 'node-cron';
 import { updateAllWinScores } from '../services/winScoreService.js';
 import { emitScoreBatchUpdate } from '../lib/socketEmitter.js';
 
-const SCHEDULE = '0 * * * *'; // Every hour
+const SCHEDULE = '5 * * * *'; // Every hour at :05 (avoids the on-the-hour job cluster)
 
 async function runScoreJob() {
   const start = new Date();

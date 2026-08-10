@@ -1,3 +1,6 @@
+// FIXED: Use VITE_API_URL environment variable for API calls
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 import useStore from '../store/useStore.js'
 
 function getToken() {
@@ -19,7 +22,8 @@ function normalizeAlert(a) {
 export async function fetchAlerts() {
   const token = getToken()
   if (!token) return []
-  const res = await fetch('/api/alerts', {
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/alerts`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) return []
@@ -39,7 +43,8 @@ export async function createAlert(alertData) {
     channel: alertData.notifyVia,
   }
 
-  const res = await fetch('/api/alerts', {
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/alerts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -55,7 +60,8 @@ export async function createAlert(alertData) {
 export async function deleteAlert(id) {
   const token = getToken()
   if (!token) throw new Error('Please log in to delete alerts')
-  const res = await fetch(`/api/alerts/${id}`, {
+  // FIXED: Added API_BASE prefix
+  const res = await fetch(`${API_BASE}/api/alerts/${id}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })

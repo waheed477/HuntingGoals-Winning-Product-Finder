@@ -3,7 +3,7 @@ import {
   FiRefreshCw, FiPlay, FiClock, FiDatabase, FiCheckCircle,
   FiAlertCircle, FiWifi, FiWifiOff, FiZap,
 } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
 
 const SCRAPERS = [

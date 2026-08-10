@@ -1,59 +1,61 @@
-# Dependencies
-
+# ─── Dependencies ───────────────────────────────────────────────────────────
 node_modules/
-package-lock.json
-yarn.lock
 frontend/node_modules/
 backend/node_modules/
 
-# Environment variables
-
+# ─── Environment variables (never commit real secrets) ──────────────────────
 .env
 .env.local
 .env.production
 .env.*.local
-backend/.env
 frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.*.local
+backend/.env
+backend/.env.local
+backend/.env.production
+backend/.env.*.local
 
-# Build output
-
+# ─── Build output ────────────────────────────────────────────────────────────
 dist/
 build/
 out/
 .next/
 frontend/dist/
 backend/dist/
+backend/.next/
 
-# Temp / OS files
-
-.DS_Store
-Thumbs.db
+# ─── Logs / temp / OS files ─────────────────────────────────────────────────
 *.log
 *.tmp
 .tmp/
 logs/
+.DS_Store
+Thumbs.db
 
-# Replit internal files (if any)
-
+# ─── Replit internal files (if any) ─────────────────────────────────────────
+.replit
 .replit.bak
-.cache/
 .secrets-backup.json
+
+# ─── Secrets / certificates ─────────────────────────────────────────────────
 *.pem
 *.key
 *.p12
+
+# ─── Agent / cache tooling ──────────────────────────────────────────────────
+.cache/
 .agents/
-.replit
 
-# IDE / Editor files
-
+# ─── IDE / Editor files ─────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Large media files (to avoid GitHub limits)
-
+# ─── Large media / archives (to avoid GitHub limits) ────────────────────────
 *.mp4
 *.mov
 *.avi

@@ -19,8 +19,7 @@ const REQUIRED_SECRETS = [
   { key: 'AUTO_SCRAPER_ENABLED',   category: 'Features',  required: false },
   { key: 'SEASONAL_FILTERING',     category: 'Features',  required: false },
   { key: 'CONFIDENCE_THRESHOLD',   category: 'Features',  required: false },
-  { key: 'SOCKET_INTERNAL_SECRET', category: 'Internal',  required: true  },
-  { key: 'SOCKET_INTERNAL_URL',    category: 'Internal',  required: false },
+  
   { key: 'BACKEND_PORT',           category: 'Server',    required: false },
   { key: 'SOCKET_PORT',            category: 'Server',    required: false },
 ];

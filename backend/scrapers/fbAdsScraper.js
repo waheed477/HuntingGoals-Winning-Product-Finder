@@ -1,11 +1,13 @@
 /**
- * Facebook Ad Library Scraper — delegates Puppeteer work to the Socket Server.
+ * Facebook Ad Library Scraper — runs the live Puppeteer scrape in-process.
  *
- * Puppeteer cannot run inside Next.js (webpack bundling issues).
- * This module calls the socket server's /internal/scrape-fb-ads endpoint,
- * which runs Puppeteer in plain Node.js and returns normalised ad objects.
+ * Previously delegated Puppeteer work to a standalone socket server over
+ * internal HTTP; Socket.io now shares this process/port, so the scraper in
+ * lib/fbLiveScraper.js is invoked via globalThis (registered at server boot —
+ * Puppeteer deliberately stays out of this webpack-bundled module's graph.
+ * Launch failures degrade gracefully to [] and never crash this module).
  *
- * Falls back to Facebook's unauthenticated JSON API if the socket server
+ * Falls back to Facebook's unauthenticated JSON API if live scraping
  * is unavailable or returns no results.
  *
  * Falls back to existing DB ads if both live methods return nothing,
@@ -20,8 +22,6 @@ import { extractCity }   from '../lib/extractCity.js';
 import { detectSeason }  from '../data/seasonalKeywords.js';
 
 const FB_ADS_ASYNC    = 'https://www.facebook.com/ads/library/async/search_ads/';
-const SOCKET_BASE_URL = process.env.SOCKET_INTERNAL_URL || 'http://localhost:3002';
-const SOCKET_SECRET   = process.env.SOCKET_INTERNAL_SECRET || 'trendspy-socket-internal';
 
 const SEARCH_TERMS = [
   { term: 'smart watch Pakistan',    category: 'Electronics' },
@@ -66,24 +66,26 @@ function tagSeason(ad) {
 }
 
 /**
- * Call the socket server's Puppeteer scrape endpoint.
- * Only works when FB_SESSION_COOKIE is set.
+ * Run the in-process Puppeteer scrape via the global registry handle
+ * (lib/fbLiveScraper.js registers itself on globalThis at server boot —
+ * importing it here would drag Puppeteer into the Next.js webpack bundle).
+ * Only works when FB_SESSION_COOKIE is set; falls back to [] on any failure.
  */
-async function scrapeViaSockerServer(searchTerm, category) {
+async function scrapeViaLiveScraper(searchTerm, category) {
   if (!process.env.FB_SESSION_COOKIE) {
     console.log(`[FB Ads] FB_SESSION_COOKIE not set — skipping Puppeteer for "${searchTerm}"`);
     return [];
   }
 
   try {
-    const res = await axios.post(
-      `${SOCKET_BASE_URL}/internal/scrape-fb-ads`,
-      { searchTerm, category },
-      { headers: { 'x-internal-secret': SOCKET_SECRET }, timeout: 90000 }
-    );
-    return res.data?.ads || [];
+    const scrape = globalThis.__trendspyScrapeFbAds;
+    if (!scrape) {
+      console.warn('[FB Ads] Live scraper not initialized yet — skipping Puppeteer');
+      return [];
+    }
+    return await scrape(searchTerm, category);
   } catch (err) {
-    console.warn(`[FB Ads] Socket server scrape failed for "${searchTerm}": ${err.message}`);
+    console.warn(`[FB Ads] Live scrape failed for "${searchTerm}": ${err.message}`);
     return [];
   }
 }
@@ -198,7 +200,7 @@ async function fbAdsScraper({ searchTerm, category, platform = 'all' } = {}) {
   for (const target of targets) {
     console.log(`[FB Ads] Processing: "${target.term}" platform="${platform}"`);
 
-    let ads = await scrapeViaSockerServer(target.term, target.category);
+    let ads = await scrapeViaLiveScraper(target.term, target.category);
 
     if (platform !== 'all' && ads.length > 0) {
       ads = ads.filter((a) => a.platform === platform);

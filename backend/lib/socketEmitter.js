@@ -1,30 +1,39 @@
 /**
  * Socket Emitter
- * Sends events from the Next.js process to the standalone Socket.io server
- * via its internal HTTP API. This avoids the need to share a process boundary.
+ * Emits events directly on the in-process Socket.io instance (attached to the
+ * main HTTP server by lib/socketServer.js). The io handle is read from
+ * globalThis so this module also works inside Next.js webpack server bundles.
+ *
+ * If Socket.io is not initialized yet, emits degrade gracefully (log + skip),
+ * exactly like the old "socket server not reachable" behavior.
  */
 
-import axios from 'axios';
+function io() {
+  return globalThis.__trendspyIO || null;
+}
 
-const SOCKET_BASE_URL = process.env.SOCKET_INTERNAL_URL || 'http://localhost:3002';
-const SOCKET_SECRET   = process.env.SOCKET_INTERNAL_SECRET || 'trendspy-socket-internal';
-
-async function emitInternal({ event, data, userId = null, productId = null }) {
-  try {
-    await axios.post(
-      `${SOCKET_BASE_URL}/internal/emit`,
-      { event, data, userId, productId },
-      {
-        headers: { 'x-internal-secret': SOCKET_SECRET },
-        timeout: 3000,
-      }
-    );
-  } catch (err) {
-    // Socket server may not be running — degrade gracefully, never block the caller
-    if (err.code !== 'ECONNREFUSED') {
-      console.warn(`[SocketEmitter] Failed to emit "${event}":`, err.message);
-    }
+/**
+ * Route an event the same way the old /internal/emit endpoint did:
+ * userId → `user:<id>` room, productId → `product:<id>` room, else broadcast.
+ */
+function emitInternal({ event, data, userId = null, productId = null }) {
+  const socket = io();
+  if (!socket) {
+    // Socket layer not initialized yet — never block the caller
+    return;
   }
+  try {
+    if (userId)         socket.to(`user:${userId}`).emit(event, data);
+    else if (productId) socket.to(`product:${productId}`).emit(event, data);
+    else                socket.emit(event, data);
+  } catch (err) {
+    console.warn(`[SocketEmitter] Failed to emit "${event}":`, err.message);
+  }
+}
+
+/** Generic event broadcast (used by jobs, e.g. TikTok completion events). */
+export async function emitSocketEvent(event, data) {
+  emitInternal({ event, data });
 }
 
 /**
@@ -32,7 +41,7 @@ async function emitInternal({ event, data, userId = null, productId = null }) {
  * @param {Object} product - Mongoose product document or plain object
  */
 export async function emitNewWinningProduct(product) {
-  await emitInternal({
+  emitInternal({
     event: 'newWinningProduct',
     data: {
       product: {
@@ -57,7 +66,7 @@ export async function emitNewWinningProduct(product) {
  * @param {number} oldScore
  */
 export async function emitScoreUpdate(product, oldScore) {
-  await emitInternal({
+  emitInternal({
     event:     'scoreUpdated',
     productId: product._id?.toString(),
     data: {
@@ -78,7 +87,7 @@ export async function emitScoreUpdate(product, oldScore) {
  * @param {Object} product
  */
 export async function emitAlertTriggered(userId, alert, product) {
-  await emitInternal({
+  emitInternal({
     event:  'alertTriggered',
     userId: userId?.toString(),
     data: {
@@ -107,7 +116,7 @@ export async function emitAlertTriggered(userId, alert, product) {
  * @param {{ count: number, newWinners: Array }} payload
  */
 export async function emitScoreBatchUpdate(payload) {
-  await emitInternal({
+  emitInternal({
     event: 'scoreBatchUpdate',
     data:  payload,
   });
@@ -118,7 +127,7 @@ export async function emitScoreBatchUpdate(payload) {
  * @param {{ count: number, categories: string[] }} payload
  */
 export async function emitNewAdsDetected(payload) {
-  await emitInternal({
+  emitInternal({
     event: 'newAdsDetected',
     data:  payload,
   });

@@ -46,16 +46,8 @@ function normalizeCategory(cat) {
 }
 
 async function launchBrowser() {
-  return puppeteer.launch({
-    headless: 'new',
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-    ],
-    executablePath: process.env.CHROMIUM_PATH || '/run/current-system/sw/bin/chromium',
-  });
+  const { getPuppeteerLaunchOptions } = await import('../lib/chromium.js');
+  return puppeteer.launch(getPuppeteerLaunchOptions());
 }
 
 async function fetchPage(browser, url, waitMs = 2500) {

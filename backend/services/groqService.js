@@ -6,7 +6,6 @@
 import Groq from 'groq-sdk';
 import { connectDB } from '../lib/db.js';
 import Supplier from '../models/Supplier.js';
-import { calculateOpportunityScore } from './opportunityService.js';
 
 // ── Module-level Groq client init (once at startup) ──────────────────────────
 let groqClient = null;
@@ -223,26 +222,12 @@ Return a JSON object with EXACTLY this structure (all fields required):
     normalized = localAnalysis(productName, productData);
   }
 
-  // Enrich with real DB suppliers + international opportunity data (fail silently)
-  const [suppliers, opportunity] = await Promise.all([
-    getSuppliersForProduct(productName, productData.category || null, productData.cities?.[0] || null),
-    calculateOpportunityScore(productName).catch(() => null),
-  ]);
+  // Enrich with real DB suppliers (fail silently)
+  const suppliers = await getSuppliersForProduct(
+    productName, productData.category || null, productData.cities?.[0] || null
+  ).catch(() => []);
 
-  const international = opportunity
-    ? {
-        globalStores:       opportunity.globalStores,
-        avgGlobalPrice:     `$${opportunity.avgPriceUSD}`,
-        avgGlobalPricePKR:  opportunity.avgPricePKR,
-        shippingToPakistan: '15–20 days (Alibaba), 5–7 days (Shopify)',
-        opportunityScore:   opportunity.score,
-        opportunityGap:     opportunity.gap,
-        shopifyStoreCount:  opportunity.shopifyCount,
-        localAvailability:  opportunity.localProducts,
-      }
-    : null;
-
-  return { ...normalized, suppliers, international };
+  return { ...normalized, suppliers };
 }
 
 /**

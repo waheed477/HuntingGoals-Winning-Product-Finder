@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FiMail, FiClock, FiMapPin, FiCheckCircle, FiSend } from 'react-icons/fi'
 import PublicLayout from '../components/PublicLayout.jsx'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 
 const INFO = [
   {

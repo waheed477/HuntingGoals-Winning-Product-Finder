@@ -8,7 +8,7 @@ import cron from 'node-cron';
 import { scrapeFacebookAds } from '../scrapers/fbAdsScraper.js';
 import { emitNewAdsDetected } from '../lib/socketEmitter.js';
 
-const SCHEDULE = '0 */12 * * *'; // Every 12 hours
+const SCHEDULE = '17 */12 * * *'; // Every 12 hours at :17 (staggered from the other 12h jobs)
 
 const CATEGORIES = [
   { term: 'Electronics Pakistan', category: 'Electronics' },

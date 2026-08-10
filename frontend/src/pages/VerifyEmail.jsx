@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { FiMail, FiArrowRight, FiRefreshCw } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
 
 export default function VerifyEmail() {

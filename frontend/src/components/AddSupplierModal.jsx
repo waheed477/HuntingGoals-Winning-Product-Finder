@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { FiX, FiMapPin, FiTag, FiPhone, FiGlobe, FiHome, FiUser } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 
 const CITIES = [
   'Lahore', 'Karachi', 'Islamabad', 'Faisalabad', 'Rawalpindi',

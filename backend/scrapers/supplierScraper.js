@@ -168,11 +168,8 @@ export async function scrapeSuppliers({ cities = ['Lahore'], categories = ['Elec
   let skipped = 0;
 
   try {
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      executablePath: process.env.CHROMIUM_PATH || '/run/current-system/sw/bin/chromium',
-    });
+    const { getPuppeteerLaunchOptions } = await import('../lib/chromium.js');
+    browser = await puppeteer.launch(getPuppeteerLaunchOptions());
 
     for (const city of cities) {
       for (const category of categories) {

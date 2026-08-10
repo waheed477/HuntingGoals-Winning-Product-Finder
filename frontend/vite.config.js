@@ -12,8 +12,9 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      // Socket.io shares the main backend process/port (3001)
       '/socket.io': {
-        target: 'http://localhost:3002',
+        target: 'http://localhost:3001',
         changeOrigin: true,
         ws: true,
       },

@@ -115,6 +115,38 @@ function createTransporter() {
 }
 
 /**
+ * Startup self-check: verifies the SMTP connection once at boot and logs a
+ * clear, actionable warning on failure. Never throws — email must degrade
+ * loudly, not silently, and must never prevent the server from starting.
+ * Rerun-safe (transporter.verify() caches nothing harmful).
+ */
+export async function verifyEmailTransport() {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn(
+      '[Email] ⚠️  EMAIL_USER/EMAIL_PASS not set — alert & digest emails are DISABLED. ' +
+      'Set them in your host environment to enable email delivery.'
+    );
+    return false;
+  }
+  try {
+    const transporter = createTransporter();
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP verify timed out after 10s')), 10_000)),
+    ]);
+    console.log('[Email] ✅ SMTP connection verified — alert & digest emails are deliverable.');
+    return true;
+  } catch (err) {
+    console.warn(
+      `[Email] ⚠️  SMTP self-check FAILED (${err.message}). ` +
+      'Alert/digest emails will fail until this is fixed. Check EMAIL_USER/EMAIL_PASS ' +
+      '(Gmail requires an App Password) and that outbound SMTP (port 465/587) is not blocked by your host.'
+    );
+    return false;
+  }
+}
+
+/**
  * Generic email helper — used by notificationService for digests and system emails.
  * Requires EMAIL_USER + EMAIL_PASS in environment.
  */

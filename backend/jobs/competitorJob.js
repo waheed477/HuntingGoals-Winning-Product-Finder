@@ -84,12 +84,8 @@ export async function updateCompetitorCounts() {
  * Start the scheduled competitor-count job (every 6 hours).
  */
 export function startCompetitorJob() {
-  if (process.env.CRON_ENABLED !== 'true') {
-    console.log('[CompetitorJob] Skipped — CRON_ENABLED is not true');
-    return;
-  }
-
-  cron.schedule('0 */6 * * *', async () => {
+  // :13 past — staggered from scrapeJob (:00) and the auto-scraper FB job (:23)
+  cron.schedule('13 */6 * * *', async () => {
     console.log(`[${new Date().toISOString()}] [CompetitorJob] Running…`);
     try {
       await updateCompetitorCounts();

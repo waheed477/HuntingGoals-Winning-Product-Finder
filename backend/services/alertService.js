@@ -1,9 +1,9 @@
-import { connectDB } from '@/lib/db';
-import { Alert, Product } from '@/models/index';
-import AlertLog from '@/models/AlertLog.js';
+import { connectDB } from '../lib/db.js';
+import { Alert, Product } from '../models/index.js';
+import AlertLog from '../models/AlertLog.js';
 import { sendEmailAlert } from './emailService.js';
 import { sendWhatsAppAlert } from './whatsappService.js';
-import { emitAlertTriggered } from '@/lib/socketEmitter';
+import { emitAlertTriggered } from '../lib/socketEmitter.js';
 import { getAlertInsight } from './groqService.js';
 import { notifyWinningProduct } from './notificationService.js';
 

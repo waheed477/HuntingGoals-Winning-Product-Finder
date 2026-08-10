@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Blueprint — HuntingGoals / TrendSpy (full-stack)
+#
+# Deploy: Render Dashboard → New → Blueprint → select this repo → Apply.
+# Two services are created:
+#   1. trendspy-api  — backend (Docker, Debian + Chromium, everything in-process)
+#   2. trendspy-web  — frontend (free static site; does NOT consume instance hours)
+#
+# The two services auto-wire each other's URLs at creation (the app prepends
+# https:// to bare hosts automatically).
+#
+# AFTER first deploy, open trendspy-api → Environment and fill the secrets
+# marked "sync: false" below (see backend/.env.example for the full list):
+#   MONGODB_URI       (required — your MongoDB Atlas URI)
+#   EMAIL_USER/EMAIL_PASS, GROQ_API_KEY, FB_SESSION_COOKIE, GOOGLE_CLIENT_*,
+#   TIKTOK_*, GREEN_API_* — all optional per-feature keys (app degrades
+#   gracefully when missing; nothing crashes)
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  # ── Backend API + Socket.io + cron jobs (single process) ──────────────────
+  - type: web
+    name: trendspy-api
+    runtime: docker
+    rootDir: backend
+    plan: free            # upgrade to Standard (2GB) for heavy scraping headroom
+    healthCheckPath: /ping
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL   # CORS allow-list — points at the static site
+        fromService:
+          type: web
+          name: trendspy-web
+          property: host
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false          # set in dashboard: mongodb+srv://user:pass@cluster/...
+      # ── optional feature keys (uncomment-type; leave unset = feature off) ──
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FB_SESSION_COOKIE
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI   # set to https://trendspy-api.onrender.com/api/auth/google/callback after deploy
+        sync: false
+      - key: TIKTOK_CLIENT_KEY
+        sync: false
+      - key: TIKTOK_CLIENT_SECRET
+        sync: false
+
+  # ── Frontend (React/Vite static SPA) ──────────────────────────────────────
+  - type: web
+    name: trendspy-web
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      # SPA fallback — every client-side route serves index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL    # baked into the build — points at the API service
+        fromService:
+          type: web
+          name: trendspy-api
+          property: host

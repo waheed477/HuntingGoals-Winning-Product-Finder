@@ -1,19 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { io } from 'socket.io-client'
-import toast from 'react-hot-toast'
+import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
+import { normalizeBaseUrl } from '../lib/baseUrl.js'
 
-// In Replit the preview is proxied — ports are served as subdomains like "3002-xxx.replit.dev"
-// rather than direct "hostname:3002". Detect and rewrite accordingly.
+// Socket.io shares the API's origin (single backend process/port), so the
+// API base URL is the socket URL. VITE_SOCKET_URL remains as an optional
+// override; empty means same-origin (works with the Vite dev proxy).
 function buildSocketUrl() {
-  if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL
-  const { protocol, hostname } = window.location
-  // Replit pattern: "<port>-<id>.replit.dev"  →  replace the leading port prefix
-  const replitMatch = hostname.match(/^(\d+)-(.+)$/)
-  if (replitMatch) return `${protocol}//3002-${replitMatch[2]}`
-  // Local dev: use direct port
-  return `${protocol}//${hostname}:3002`
+  return normalizeBaseUrl(import.meta.env.VITE_API_URL || import.meta.env.VITE_SOCKET_URL) || undefined
 }
 const SOCKET_URL = buildSocketUrl()
 

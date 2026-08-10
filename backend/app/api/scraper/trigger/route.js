@@ -1,8 +1,3 @@
-import axios from 'axios';
-
-const SOCKET_BASE   = process.env.SOCKET_INTERNAL_URL    || 'http://localhost:3002';
-const SOCKET_SECRET = process.env.SOCKET_INTERNAL_SECRET || 'trendspy-socket-internal';
-
 const VALID_SCRAPERS = ['facebookAds', 'daraz', 'olx', 'googleTrends', 'news', 'suppliers'];
 
 export async function POST(request) {
@@ -17,21 +12,16 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // facebookAds → hit the socket server's run-fb-job endpoint (Puppeteer lives there)
-    if (scraper === 'facebookAds') {
-      const res = await axios.post(
-        `${SOCKET_BASE}/internal/run-fb-job`,
-        {},
-        { headers: { 'x-internal-secret': SOCKET_SECRET }, timeout: 10000 }
-      );
-      return Response.json(res.data);
+    const scheduler = globalThis.__trendspyScheduler;
+    if (!scheduler) {
+      return Response.json({ success: false, error: 'Scheduler not initialized yet' }, { status: 503 });
     }
 
-    // Other scrapers → generic scheduler trigger (future use)
-    return Response.json({
-      success: true,
-      message: `${scraper} scrape queued`,
-    });
+    // Triggers run fire-and-forget in-process (same semantics as the old
+    // socket-server /internal/run-fb-job and /scheduler/trigger endpoints).
+    scheduler.trigger(scraper);
+
+    return Response.json({ success: true, message: `${scraper} job triggered` });
   } catch (err) {
     console.error('[POST /api/scraper/trigger]', err.message);
     return Response.json({ success: false, error: err.message }, { status: 502 });

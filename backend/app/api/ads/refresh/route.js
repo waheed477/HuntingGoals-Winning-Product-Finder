@@ -1,17 +1,21 @@
 import { connectDB } from '@/lib/db';
 import { ScrapedAd } from '@/models/index';
-import axios from 'axios';
 
-const SOCKET_BASE_URL = process.env.SOCKET_INTERNAL_URL || 'http://localhost:3002';
-const SOCKET_SECRET   = process.env.SOCKET_INTERNAL_SECRET || 'trendspy-socket-internal';
-
-async function callScraperOnSocketServer(searchTerm, category) {
-  const res = await axios.post(
-    `${SOCKET_BASE_URL}/internal/scrape-fb-ads`,
-    { searchTerm, category },
-    { headers: { 'x-internal-secret': SOCKET_SECRET }, timeout: 90000 }
-  );
-  return res.data;
+/**
+ * Run the live FB Ad Library scrape in-process. The scraper (lib/fbLiveScraper.js)
+ * is registered on globalThis by the main server at boot — importing it here
+ * would pull Puppeteer into the webpack bundle, which must never happen.
+ * Launch failures degrade to the JSON-API fallback inside the scraper itself.
+ */
+async function runLiveScrape(searchTerm, category) {
+  const scrape = globalThis.__trendspyScrapeFbAds;
+  if (!scrape) {
+    const err = new Error('Live scraper not initialized yet — server still starting');
+    err.statusCode = 503;
+    throw err;
+  }
+  const ads = await scrape(searchTerm, category);
+  return { ads, totalFound: ads.length };
 }
 
 export async function POST(request) {
@@ -23,7 +27,7 @@ export async function POST(request) {
 
     console.log(`[POST /api/ads/refresh] Scraping: "${searchTerm}" category="${category}" platform="${platform}"`);
 
-    const result = await callScraperOnSocketServer(searchTerm, category, platform);
+    const result = await runLiveScrape(searchTerm, category, platform);
     const ads    = result.ads || [];
 
     // Upsert ads into MongoDB

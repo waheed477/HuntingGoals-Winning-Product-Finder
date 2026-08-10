@@ -5,15 +5,12 @@
  */
 
 import cron    from 'node-cron';
-import axios   from 'axios';
 import { connectDB }                       from '../lib/db.js';
 import { Product }                          from '../models/index.js';
 import { fetchPakistanTrendingSignals }     from '../services/tiktokOfficialService.js';
+import { emitSocketEvent }                  from '../lib/socketEmitter.js';
 
 const SCHEDULE       = '0 4 * * *'; // Every day at 4:00 AM PKT
-const NEXT_API       = process.env.NEXT_INTERNAL_URL       || 'http://localhost:3001';
-const SOCKET_SECRET  = process.env.SOCKET_INTERNAL_SECRET  || 'trendspy-socket-internal';
-const SOCKET_BASE    = process.env.SOCKET_INTERNAL_URL     || 'http://localhost:3002';
 
 // ─── Core Job Logic ───────────────────────────────────────────────────────────
 
@@ -79,25 +76,15 @@ export async function runTikTokJob() {
       }
     }
 
-    // 3. Broadcast results via socket server
+    // 3. Broadcast results over the in-process Socket.io (best-effort)
     try {
-      await axios.post(
-        `${SOCKET_BASE}/internal/emit`,
-        {
-          event: 'tiktokJobComplete',
-          data:  {
-            videosProcessed: videos.length,
-            totalViews,
-            productsUpdated,
-            hashtagStats,
-            completedAt: new Date().toISOString(),
-          },
-        },
-        {
-          headers: { 'x-internal-secret': SOCKET_SECRET },
-          timeout: 5000,
-        }
-      );
+      await emitSocketEvent('tiktokJobComplete', {
+        videosProcessed: videos.length,
+        totalViews,
+        productsUpdated,
+        hashtagStats,
+        completedAt: new Date().toISOString(),
+      });
     } catch {
       // Socket broadcast is best-effort — don't fail the job
     }
