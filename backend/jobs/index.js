@@ -1,0 +1,10 @@
+export { startScrapeJob }        from './scrapeJob.js';
+export { startTrendJob }         from './trendJob.js';
+export { startScoreJob }         from './scoreJob.js';
+export { startFbAdsJob }         from './fbAdsJob.js';
+export { startAlertJob }         from './alertJob.js';
+export { startInternationalJob } from './internationalJob.js';
+export { startCompetitorJob }    from './competitorJob.js';
+export { startAutoCorrectJob }   from './autoCorrectJob.js';
+export { startTikTokJob }        from './tiktokJob.js';
+export { startDigestJob }        from './digestJob.js';

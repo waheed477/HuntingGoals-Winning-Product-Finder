@@ -1,0 +1,39 @@
+{
+  "name": "hunting-goals-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "NODE_ENV=development node server.js",
+    "dev:socket": "node socket-server.js",
+    "build": "next build",
+    "start": "NODE_ENV=production next start -p 3001",
+    "start:socket": "node socket-server.js",
+    "test:db": "node scripts/test-db.js"
+  },
+  "dependencies": {
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.22.2",
+    "express-rate-limit": "^8.5.2",
+    "fits-api": "^0.2.0",
+    "google-trends-api": "^4.9.2",
+    "groq-sdk": "^1.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb-memory-server": "^11.1.0",
+    "mongoose": "^8.0.0",
+    "next": "14.2.35",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.16",
+    "playwright": "^1.60.0",
+    "puppeteer": "^24.43.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "react": "^18",
+    "react-dom": "^18",
+    "slugify": "^1.6.9",
+    "socket.io": "^4.8.1"
+  }
+}
