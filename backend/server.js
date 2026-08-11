@@ -1,4 +1,5 @@
-import { parse }     from 'url';
+import 'dotenv/config'; // must run first: loads backend/.env for local dev (no-op on Render where env is injected)
+import { parse, fileURLToPath } from 'url';
 import http          from 'http';
 import express       from 'express';
 import next          from 'next';
@@ -28,16 +29,21 @@ async function main() {
       console.error('[server] ❌ MONGODB_URI not set in production. Set it in your host environment (e.g. Render → Environment).');
       process.exit(1);
     }
-    console.log('[server] No Atlas URI — starting in-memory MongoDB (dev mode, data resets on restart)...');
-    const { MongoMemoryServer } = await import('mongodb-memory-server');
-    const mongod = await MongoMemoryServer.create();
-    process.env.MONGODB_URI = mongod.getUri();
-    process.env.DB_NAME = process.env.DB_NAME || 'trendspy';
-    console.log('[server] ✅ In-memory MongoDB ready');
+    if (atlasUri) {
+      // Dev: an explicitly-set MONGODB_URI (even a local mongodb:// one) always wins
+      console.log('[server] ✅ Using provided MONGODB_URI (dev mode)');
+    } else {
+      console.log('[server] No Atlas URI — starting in-memory MongoDB (dev mode, data resets on restart)...');
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
+      const mongod = await MongoMemoryServer.create();
+      process.env.MONGODB_URI = mongod.getUri();
+      process.env.DB_NAME = process.env.DB_NAME || 'trendspy';
+      console.log('[server] ✅ In-memory MongoDB ready');
 
-    const stop = async () => { await mongod.stop(); process.exit(0); };
-    process.on('SIGTERM', stop);
-    process.on('SIGINT',  stop);
+      const stop = async () => { await mongod.stop(); process.exit(0); };
+      process.on('SIGTERM', stop);
+      process.on('SIGINT',  stop);
+    }
   }
 
   // ── Seed ──────────────────────────────────────────────────────────────────
@@ -49,7 +55,8 @@ async function main() {
   }
 
   // ── Next.js ───────────────────────────────────────────────────────────────
-  const nextApp = next({ dev, dir: new URL('.', import.meta.url).pathname });
+  // fileURLToPath is required: plain URL.pathname breaks on Windows paths (leading '/' + %20-encoded spaces)
+  const nextApp = next({ dev, dir: fileURLToPath(new URL('.', import.meta.url)) });
   const handle  = nextApp.getRequestHandler();
   await nextApp.prepare();
 
