@@ -1,27 +1,15 @@
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 import EmailVerification from '../models/EmailVerification.js';
+// Unified transport (Resend HTTPS/API first, Gmail SMTP fallback) — see mailTransport.js
+import { sendMail } from './mailTransport.js';
 
 export function generateOTP() {
   return crypto.randomInt(100000, 999999).toString();
 }
 
+// Kept export name/signature — password-reset flow imports this too.
 export async function sendEmail(to, subject, html) {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-  if (!user || !pass) throw new Error('EMAIL_USER and EMAIL_PASS environment variables are required');
-
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-  });
-
-  await transporter.sendMail({
-    from: `"TrendSpy" <${user}>`,
-    to,
-    subject,
-    html,
-  });
+  await sendMail({ to, subject, html });
 }
 
 function verificationEmailHtml(otp) {

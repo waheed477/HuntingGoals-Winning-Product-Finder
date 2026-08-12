@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+// Unified transport (Resend HTTPS/API first, Gmail SMTP fallback) — see mailTransport.js
+import { sendMail, verifyTransport } from './mailTransport.js';
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5000';
 
@@ -100,78 +101,32 @@ function buildEmailHtml(product) {
 </html>`;
 }
 
-function createTransporter() {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-
-  if (!user || !pass) {
-    throw new Error('EMAIL_USER and EMAIL_PASS environment variables are required for email alerts.');
-  }
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-  });
-}
-
 /**
- * Startup self-check: verifies the SMTP connection once at boot and logs a
- * clear, actionable warning on failure. Never throws — email must degrade
- * loudly, not silently, and must never prevent the server from starting.
- * Rerun-safe (transporter.verify() caches nothing harmful).
+ * Startup self-check: delegates to the unified transport (Resend API → SMTP
+ * fallback). Verifies connectivity once at boot and logs a clear, actionable
+ * warning on failure. Never throws — email must degrade loudly, not silently,
+ * and must never prevent the server from starting.
  */
 export async function verifyEmailTransport() {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn(
-      '[Email] ⚠️  EMAIL_USER/EMAIL_PASS not set — alert & digest emails are DISABLED. ' +
-      'Set them in your host environment to enable email delivery.'
-    );
-    return false;
-  }
-  try {
-    const transporter = createTransporter();
-    await Promise.race([
-      transporter.verify(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP verify timed out after 10s')), 10_000)),
-    ]);
-    console.log('[Email] ✅ SMTP connection verified — alert & digest emails are deliverable.');
-    return true;
-  } catch (err) {
-    console.warn(
-      `[Email] ⚠️  SMTP self-check FAILED (${err.message}). ` +
-      'Alert/digest emails will fail until this is fixed. Check EMAIL_USER/EMAIL_PASS ' +
-      '(Gmail requires an App Password) and that outbound SMTP (port 465/587) is not blocked by your host.'
-    );
-    return false;
-  }
+  return verifyTransport();
 }
 
 /**
  * Generic email helper — used by notificationService for digests and system emails.
- * Requires EMAIL_USER + EMAIL_PASS in environment.
+ * Works with RESEND_API_KEY (HTTPS API) or EMAIL_USER + EMAIL_PASS (Gmail SMTP).
  */
 export async function sendEmail(to, subject, html) {
-  const transporter = createTransporter();
-  const info = await transporter.sendMail({
-    from: `"TrendSpy" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html,
-  });
-  console.log(`[Email] Sent "${subject}" to ${to} — messageId: ${info.messageId}`);
-  return info;
+  return sendMail({ to, subject, html });
 }
 
 export async function sendEmailAlert(userEmail, product) {
-  const transporter = createTransporter();
-
-  const info = await transporter.sendMail({
-    from: `"TrendSpy Alerts" <${process.env.EMAIL_USER}>`,
+  const info = await sendMail({
+    fromName: 'TrendSpy Alerts',
     to: userEmail,
     subject: `🚀 Alert: ${product.name} hit Win Score ${product.winScore}/100`,
     html: buildEmailHtml(product),
   });
 
-  console.log(`[Email] Sent alert for "${product.name}" to ${userEmail} — messageId: ${info.messageId}`);
+  console.log(`[Email] Alert for "${product.name}" → ${userEmail}`);
   return info;
 }
