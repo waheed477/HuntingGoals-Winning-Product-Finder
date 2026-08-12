@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { FiRefreshCw, FiMapPin, FiZap, FiAlertCircle } from 'react-icons/fi'
+import { FiRefreshCw, FiMapPin, FiAlertCircle } from 'react-icons/fi'
 import toast from '../lib/toast.js'
 import AdWinnerCard from '../components/AdWinnerCard.jsx'
 import AdScoreBreakdownModal from '../components/AdScoreBreakdownModal.jsx'
@@ -36,7 +36,6 @@ function StatsBanner({ stats, selectedCity, cityCoverage, lastUpdated, isFetchin
       style={{ backgroundColor: 'rgba(200,245,66,0.04)', borderColor: 'rgba(200,245,66,0.15)' }}
     >
       <div className="flex items-center gap-1.5">
-        <FiZap size={13} style={{ color: 'var(--color-acid)' }} />
         <span className="font-mono-label text-[10px] text-[var(--color-acid)] uppercase tracking-[0.2em]">
           Live FB Ads Intelligence
         </span>
@@ -84,7 +83,7 @@ function StatsBanner({ stats, selectedCity, cityCoverage, lastUpdated, isFetchin
           {scraping ? (
             <><FiRefreshCw size={11} className="animate-spin" /> Scraping...</>
           ) : (
-            <><FiZap size={11} /> Refresh Data</>
+            <>Refresh Data</>
           )}
         </button>
       </div>
@@ -127,7 +126,7 @@ function EmptyState({ city, onScrape, scraping }) {
         className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
         style={{ backgroundColor: 'rgba(200,245,66,0.08)' }}
       >
-        <FiZap size={24} style={{ color: 'var(--color-acid)', opacity: 0.5 }} />
+        <FiRefreshCw size={24} style={{ color: 'var(--color-acid)', opacity: 0.5 }} />
       </div>
       {city ? (
         <>
@@ -150,7 +149,7 @@ function EmptyState({ city, onScrape, scraping }) {
             className="btn-shine inline-flex items-center gap-2 px-5 py-2.5 font-mono-label text-[10px] uppercase tracking-[0.15em] rounded-xl transition-all disabled:opacity-50"
             style={{ backgroundColor: 'var(--color-acid)', color: 'var(--color-ink)' }}
           >
-            {scraping ? <><FiRefreshCw size={14} className="animate-spin" /> Scraping...</> : <><FiZap size={14} /> Refresh Data</>}
+            {scraping ? <><FiRefreshCw size={14} className="animate-spin" /> Scraping...</> : <>Refresh Data</>}
           </button>
         </>
       )}
@@ -253,9 +252,9 @@ export default function ProductHunt() {
         <p className="font-mono-label text-[10px] text-[var(--color-acid)] uppercase tracking-[0.3em] mb-1">
           — Product Intel —
         </p>
-        <h1 className="font-display font-bold text-2xl text-[var(--color-bone)] tracking-tight">Winning Products</h1>
+        <h1 className="font-display font-bold text-2xl text-[var(--color-bone)] tracking-tight">Today's Winning Products</h1>
         <p className="font-body text-sm text-[var(--color-moss)] mt-0.5">
-          Detected from live Facebook Ad Library — scored by advertiser diversity, volume, longevity and spend signals
+          Hunted live from the Facebook Ad Library — scored by advertiser diversity, volume, longevity and spend signals
         </p>
       </div>
 

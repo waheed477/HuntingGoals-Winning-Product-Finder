@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser, FiShield } from 'react-icons/fi'
-import toast from '../lib/toast.js'
+import AuthMessage from '../components/AuthMessage.jsx'
 import useStore from '../store/useStore.js'
 
 function GoogleIcon() {
@@ -30,6 +30,7 @@ export default function Login() {
   const [isLoading, setIsLoading]         = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [isSignup, setIsSignup]           = useState(false)
+  const [notice, setNotice]               = useState(null) // {type:'error'|'success', msg} — inline banner above the fields
   const setUser   = useStore((s) => s.setUser)
   const navigate  = useNavigate()
   const [searchParams] = useSearchParams()
@@ -40,7 +41,7 @@ export default function Login() {
     const name         = searchParams.get('name')
     const error        = searchParams.get('error')
 
-    if (error) { toast.error(GOOGLE_ERROR_MESSAGES[error] || 'Google sign-in failed.'); return }
+    if (error) { setNotice({ type: 'error', msg: GOOGLE_ERROR_MESSAGES[error] || 'Google sign-in failed.' }); return }
 
     if (googleStatus === 'success' && token) {
       const displayName = decodeURIComponent(name || '')
@@ -50,21 +51,21 @@ export default function Login() {
         .then((data) => {
           if (data.success) {
             setUser({ ...data.data.user, token })
-            toast.success(`Welcome${displayName ? `, ${displayName}` : ''}!`)
             navigate('/dashboard')
           } else {
-            toast.error('Session error. Please try again.')
+            setNotice({ type: 'error', msg: 'Session error. Please try again.' })
           }
         })
-        .catch(() => toast.error('Connection error after Google sign-in.'))
+        .catch(() => setNotice({ type: 'error', msg: 'Connection error after Google sign-in.' }))
         .finally(() => setGoogleLoading(false))
     }
   }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!email || !password) { toast.error('Please fill in all fields'); return }
-    if (isSignup && !name.trim()) { toast.error('Name is required'); return }
+    setNotice(null)
+    if (!email || !password) { setNotice({ type: 'error', msg: 'Please fill in all fields' }); return }
+    if (isSignup && !name.trim()) { setNotice({ type: 'error', msg: 'Name is required' }); return }
 
     setIsLoading(true)
     try {
@@ -78,7 +79,7 @@ export default function Login() {
       })
       const data = await res.json()
 
-      if (!data.success) { toast.error(data.error || 'Authentication failed'); return }
+      if (!data.success) { setNotice({ type: 'error', msg: data.error || 'Authentication failed' }); setIsLoading(false); return }
 
       if (data.requiresVerification) {
         navigate(`/verify-email?email=${encodeURIComponent(data.email)}`)
@@ -87,7 +88,7 @@ export default function Login() {
 
       const { user, token } = data.data
       setUser({ ...user, token })
-      toast.success(`Welcome${isSignup ? '' : ' back'}, ${user.name || user.email.split('@')[0]}!`)
+      setNotice({ type: 'success', msg: `Welcome${isSignup ? '' : ' back'}, ${user.name || user.email.split('@')[0]}!` })
 
       if (isSignup) {
         navigate('/onboarding')
@@ -103,8 +104,8 @@ export default function Login() {
         }
       }
     } catch (err) {
-      toast.error('Connection error. Is the backend running?')
-      console.error('[Login]', err)
+      setNotice({ type: 'error', msg: 'Connection error. Is the backend running?' })
+      if (import.meta.env.DEV) console.error('[Login]', err)
     } finally {
       setIsLoading(false)
     }
@@ -196,6 +197,9 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Inline auth message — directly above the fields */}
+            <AuthMessage notice={notice} />
+
             {isSignup && (
               <div>
                 <label className="block font-mono-label text-[10px] text-[var(--color-smoke)] uppercase tracking-[0.2em] mb-1.5">

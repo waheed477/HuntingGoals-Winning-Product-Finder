@@ -41,3 +41,10 @@ export const api = {
   put:    (path, body)  => request(path, { method: 'PUT',    body: JSON.stringify(body) }),
   delete: (path)        => request(path, { method: 'DELETE' }),
 }
+
+// On-demand AI endpoints (server-side cached — repeated clicks don't re-bill the AI)
+export const identifyAd             = (adId) => api.post(`/ads/${adId}/identify`)
+export const getSourcingAdvice      = (slug) => api.post(`/products/${slug}/sourcing-advice`)
+// Product Hunt (winning products): identify from the product's best representative ad
+export const identifyWinningProduct = ({ productName, category }) =>
+  api.post('/products/winning/identify', { productName, category })

@@ -22,7 +22,23 @@ export async function checkAndTriggerAlerts(product) {
     return scoreOk && cityOk && catOk;
   });
 
-  const results = { triggered: triggered.length, whatsapp: 0, email: 0, errors: [] };
+  // ── Dedup: the alert job runs every 30 min — without this, the same product
+  // would re-notify the same user on every cycle. One notification per
+  // alert×product per cooldown window (default 24h, ALERT_COOLDOWN_HOURS).
+  const COOLDOWN_HOURS = Math.max(1, parseInt(process.env.ALERT_COOLDOWN_HOURS || '24', 10) || 24);
+  const cooldownSince  = new Date(Date.now() - COOLDOWN_HOURS * 3600 * 1000);
+  let toNotify = triggered;
+  if (triggered.length > 0) {
+    const recentLogs = await AlertLog.find({
+      alertId:   { $in: triggered.map((a) => a._id) },
+      productId: product._id,
+      sentAt:    { $gte: cooldownSince },
+    }).select('alertId').lean();
+    const recentlySent = new Set(recentLogs.map((l) => String(l.alertId)));
+    toNotify = triggered.filter((a) => !recentlySent.has(String(a._id)));
+  }
+
+  const results = { triggered: triggered.length, notified: toNotify.length, whatsapp: 0, email: 0, errors: [] };
 
   // For high-value products, generate a one-line AI insight
   let aiSummary = '';
@@ -36,7 +52,7 @@ export async function checkAndTriggerAlerts(product) {
 
   const enrichedProduct = aiSummary ? { ...product, aiSummary } : product;
 
-  for (const alert of triggered) {
+  for (const alert of toNotify) {
     const user = alert.userId;
     if (!user) continue;
 

@@ -52,6 +52,30 @@ const scrapedAdSchema = new mongoose.Schema(
     scrapedAt: { type: Date, default: Date.now, index: true },
     isActive:  { type: Boolean, default: true },
     directUrl: { type: String, default: null },
+
+    // ── Creative archival (Cloudinary) — FB CDN images expire in ~30-60 days;
+    //    a permanent copy keeps the AI identifier + swipe file alive ──────────
+    archivedImageUrl: { type: String, default: null },
+    archiveStatus:    { type: String, enum: ['pending', 'done', 'failed'], default: 'pending' },
+    archiveAttempts:  { type: Number, default: 0 },
+    lastArchiveTry:   { type: Date, default: null },
+
+    // ── AI Product Identifier (on-demand, cached forever once identified) ───
+    identifiedProduct: {
+      name:                { type: String, default: null },
+      category:            { type: String, default: null },
+      keyFeatures:         [{ type: String }],
+      confidence:          { type: Number, min: 0, max: 100, default: null },
+      identificationStatus: {
+        type: String,
+        enum: ['pending', 'identified', 'low_confidence', 'failed'],
+        default: 'pending',
+      },
+      identifiedAt:        { type: Date, default: null },
+      rawModelResponse:    { type: String, default: null }, // raw JSON for audit
+      productSlug:         { type: String, default: null }, // resolved Product for sourcing advice
+      source:              { type: String, enum: ['image', 'text'], default: null }, // how the AI read it
+    },
   },
   { timestamps: true }
 );

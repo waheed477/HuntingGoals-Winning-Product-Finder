@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   FiX, FiTrendingUp, FiDollarSign, FiTarget, FiUsers, FiStar,
-  FiPhone, FiGlobe, FiShield, FiZap, FiPackage, FiLink, FiMapPin,
+  FiPhone, FiGlobe, FiShield, FiPackage, FiLink, FiMapPin,
   FiExternalLink, FiClock, FiBarChart2,
 } from 'react-icons/fi'
 import { formatPKR } from '../utils/formatPKR.js'

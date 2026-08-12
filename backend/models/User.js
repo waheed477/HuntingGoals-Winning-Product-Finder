@@ -54,6 +54,10 @@ const userSchema = new mongoose.Schema(
       enum: ['free', 'pro', 'business'],
       default: 'free',
     },
+    // Stripe billing (test-mode integration)
+    stripeCustomerId:     { type: String, default: null },
+    stripeSubscriptionId: { type: String, default: null },
+    planActivatedAt:      { type: Date,   default: null },
     apiKey:             { type: String },
     apiKeyGeneratedAt:  { type: Date },
     apiKeyLastUsed:     { type: Date },

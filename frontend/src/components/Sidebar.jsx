@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { FiGrid, FiSearch, FiEye, FiUser, FiSun, FiMoon } from 'react-icons/fi'
-import { useTheme } from '../context/ThemeContext.jsx'
+import { FiGrid, FiSearch, FiEye, FiUser, FiHelpCircle } from 'react-icons/fi'
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: FiGrid,   label: 'Dashboard'    },
@@ -10,9 +9,6 @@ const NAV_ITEMS = [
 ]
 
 export default function Sidebar() {
-  const { theme, toggleTheme } = useTheme()
-  const isDark = theme === 'dark'
-
   return (
     <aside
       className="w-56 flex-shrink-0 border-r h-full overflow-y-auto hidden md:flex flex-col py-4"
@@ -44,14 +40,14 @@ export default function Sidebar() {
         className="px-3 mt-4 space-y-2 border-t pt-4"
         style={{ borderColor: 'var(--color-ink-4)' }}
       >
-        {/* Theme toggle */}
+        {/* Replay welcome tour */}
         <button
-          onClick={toggleTheme}
+          onClick={() => window.dispatchEvent(new CustomEvent('hg:open-tour'))}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-body font-medium transition-all duration-200 text-[var(--color-moss)] hover:text-[var(--color-bone)] hover:bg-[var(--color-ink-3)]"
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          title="Replay the quick-start tour"
         >
-          {isDark ? <FiSun size={17} /> : <FiMoon size={17} />}
-          {isDark ? 'Light Mode' : 'Dark Mode'}
+          <FiHelpCircle size={17} />
+          Quick Tour
         </button>
 
         {/* Info card */}

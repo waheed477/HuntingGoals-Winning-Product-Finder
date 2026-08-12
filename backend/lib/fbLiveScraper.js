@@ -114,7 +114,10 @@ function extractAdsFromHtml(html) {
         const images      = snap.images || [];
         const videos      = snap.videos || [];
         const cards       = snap.cards  || [];
-        const imageUrl    = images[0]?.original_image_url || images[0]?.url || '';
+        // Video ads carry a product preview frame — never drop it, the AI
+        // identifier needs an image and video ads are our most common creative.
+        const imageUrl    = images[0]?.original_image_url || images[0]?.url
+                         || videos[0]?.video_preview_image_url || videos[0]?.preview_image_url || '';
         const videoUrl    = videos[0]?.video_hd_url || videos[0]?.url || '';
         const creativeType = videos.length > 0 ? 'video' : (cards.length > 1 || images.length > 1 ? 'carousel' : 'image');
 
@@ -284,7 +287,10 @@ async function tryJsonApiFallback(searchTerm, category) {
       // Never use raw.id — it can be a non-numeric internal React key
       const adId     = String(raw.adArchiveID || raw.ad_archive_id || '');
       const snapshot = raw.snapshot || raw.creative || {};
-      const imageUrl = snapshot.images?.[0]?.original_image_url || '';
+      // Keep the video preview frame too — without it video-only ads never get an image
+      const imageUrl = snapshot.images?.[0]?.original_image_url
+                    || snapshot.videos?.[0]?.video_preview_image_url
+                    || snapshot.videos?.[0]?.preview_image_url || '';
       const videoUrl = snapshot.videos?.[0]?.video_hd_url || '';
       const advName  = raw.pageName || raw.page_name || 'Unknown';
       const headline = (snapshot.title || snapshot.body?.text || raw.ad_creative_bodies?.[0] || '').slice(0, 300);

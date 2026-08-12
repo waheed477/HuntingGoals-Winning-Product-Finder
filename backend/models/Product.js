@@ -55,6 +55,21 @@ const productSchema = new mongoose.Schema(
     googleTrendSpike:  { type: Number, default: 0 },
     alibabaOrderSurge: { type: Number, default: 0 },
 
+    // AI Sourcing (filled on demand via /api/products/[slug]/sourcing-advice)
+    matchedSuppliers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' }],
+    sourcingAdvice: {
+      summary:              { type: String, default: null },
+      recommendedStockSize: { type: String, default: null },
+      suggestedPricePoint:  { type: String, default: null },
+      competitionLevel: {
+        type: String,
+        enum: ['Low', 'Medium', 'High', null],
+        default: null,
+      },
+      suggestedAdAngle:     { type: String, default: null },
+      generatedAt:          { type: Date, default: null },
+    },
+
     // Seasonal
     season: {
       type: String,

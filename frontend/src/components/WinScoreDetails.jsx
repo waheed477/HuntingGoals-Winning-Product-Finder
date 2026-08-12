@@ -193,7 +193,7 @@ export default function WinScoreDetails({ product, onClose }) {
         setFallbackMsg(result.fallbackMsg || null)
       }
     } catch (err) {
-      console.warn('[WinScoreDetails] supplier fetch failed:', err.message)
+      if (import.meta.env.DEV) console.warn('[WinScoreDetails] supplier fetch failed:', err.message)
     } finally {
       setLoadingSuppliers(false)
     }

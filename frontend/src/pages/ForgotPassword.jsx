@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff, FiCheckCircle } from 'react-icons/fi'
-import toast from '../lib/toast.js'
+import AuthMessage from '../components/AuthMessage.jsx'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
@@ -12,6 +12,7 @@ export default function ForgotPassword() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [notice, setNotice]   = useState(null) // inline banner (no popups)
   const inputRefs = useRef([])
 
   useEffect(() => {
@@ -43,7 +44,8 @@ export default function ForgotPassword() {
   }
 
   const handleSendOTP = async () => {
-    if (!email) { toast.error('Please enter your email'); return }
+    setNotice(null)
+    if (!email) { setNotice({ type: 'error', msg: 'Please enter your email' }); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -53,13 +55,13 @@ export default function ForgotPassword() {
       })
       const data = await res.json()
       if (data.success) {
-        toast.success('Reset code sent — check your inbox')
+        setNotice({ type: 'success', msg: 'Reset code sent — check your inbox' })
         setStep(2)
       } else {
-        toast.error(data.error || 'Failed to send reset code')
+        setNotice({ type: 'error', msg: data.error || 'Failed to send reset code' })
       }
     } catch {
-      toast.error('Connection error. Please try again.')
+      setNotice({ type: 'error', msg: 'Connection error. Please try again.' })
     } finally {
       setLoading(false)
     }
@@ -67,9 +69,10 @@ export default function ForgotPassword() {
 
   const handleResetPassword = async () => {
     const code = otp.join('')
-    if (code.length !== 6) { toast.error('Please enter the 6-digit code'); return }
-    if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return }
-    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return }
+    setNotice(null)
+    if (code.length !== 6) { setNotice({ type: 'error', msg: 'Please enter the 6-digit code' }); return }
+    if (newPassword.length < 6) { setNotice({ type: 'error', msg: 'Password must be at least 6 characters' }); return }
+    if (newPassword !== confirmPassword) { setNotice({ type: 'error', msg: 'Passwords do not match' }); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -81,12 +84,12 @@ export default function ForgotPassword() {
       if (data.success) {
         setStep(3)
       } else {
-        toast.error(data.error || 'Reset failed')
+        setNotice({ type: 'error', msg: data.error || 'Reset failed' })
         setOtp(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
       }
     } catch {
-      toast.error('Connection error. Please try again.')
+      setNotice({ type: 'error', msg: 'Connection error. Please try again.' })
     } finally {
       setLoading(false)
     }
@@ -118,6 +121,8 @@ export default function ForgotPassword() {
               <h1 className="text-xl font-bold text-white mb-2">Forgot password?</h1>
               <p className="text-sm text-gray-400">Enter your email and we'll send you a reset code</p>
             </div>
+
+            <div className="mb-4"><AuthMessage notice={notice} /></div>
 
             <div className="space-y-4">
               <div>
@@ -174,6 +179,8 @@ export default function ForgotPassword() {
                 Code sent to <span className="text-white font-medium">{email}</span>
               </p>
             </div>
+
+            <div className="mb-4"><AuthMessage notice={notice} /></div>
 
             <div className="space-y-5">
               <div>

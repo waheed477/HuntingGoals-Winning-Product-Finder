@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { FiEye, FiImage, FiVideo, FiLayout, FiSliders, FiRefreshCw, FiWifi, FiUsers, FiExternalLink, FiKey, FiChevronRight, FiZap } from 'react-icons/fi'
+import { FiEye, FiImage, FiVideo, FiLayout, FiSliders, FiRefreshCw, FiWifi, FiUsers, FiExternalLink, FiKey, FiChevronRight } from 'react-icons/fi'
 import { CITIES, CATEGORIES } from '../utils/cityList.js'
 import { useAdsRealtime } from '../hooks/useAdsRealtime.js'
 import useStore from '../store/useStore.js'
@@ -18,6 +18,8 @@ const SPEND_COLORS = {
   High:      'bg-orange-500/20 text-orange-400',
   'Very High': 'bg-red-500/20 text-red-400',
 }
+
+import AdIdentifier from '../components/AdIdentifier.jsx'
 
 async function fetchAdsFromAPI(filters) {
   const params = new URLSearchParams()
@@ -265,7 +267,6 @@ export default function AdSpy() {
             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600/20 border border-primary-500/30 text-primary-300 hover:bg-primary-600/30 hover:text-white rounded-lg text-xs font-medium transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             title="Trigger a fresh scrape of all 8 search terms"
           >
-            <FiZap size={12} className={isScraping ? 'animate-pulse' : ''} />
             {isScraping ? 'Scraping...' : 'Scrape Now'}
           </button>
           <button
@@ -432,6 +433,8 @@ export default function AdSpy() {
                 {ad.advertiser && (
                   <p className="text-xs text-gray-600 truncate">by {ad.advertiser}</p>
                 )}
+
+                <AdIdentifier ad={ad} />
 
                 <div className="flex items-center gap-3 pt-2 border-t border-white/5">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">

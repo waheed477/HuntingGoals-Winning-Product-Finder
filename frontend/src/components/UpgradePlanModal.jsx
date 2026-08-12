@@ -1,4 +1,7 @@
-import { FiX, FiCheck, FiZap } from 'react-icons/fi'
+import { useState } from 'react'
+import { FiX, FiCheck } from 'react-icons/fi'
+import { api } from '../lib/api.js'
+import toast from '../lib/toast.js'
 
 const PLANS = [
   {
@@ -53,14 +56,26 @@ const PLANS = [
 ]
 
 export default function UpgradePlanModal({ currentPlan = 'free', onClose }) {
+  const [loadingPlan, setLoadingPlan] = useState(null)
+
+  const startCheckout = async (planName) => {
+    const planKey = planName.toLowerCase()
+    setLoadingPlan(planKey)
+    try {
+      const res = await api.post('/billing/checkout', { plan: planKey })
+      // Stripe-hosted checkout page — user returns to /billing/success
+      window.location.href = res.data.url
+    } catch (err) {
+      toast.error(err.message)
+      setLoadingPlan(null)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
       <div className="glass-card w-full max-w-3xl p-6 rounded-2xl my-4">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-accent-500/20 border border-accent-500/30 rounded-xl flex items-center justify-center">
-              <FiZap size={18} className="text-accent-400" />
-            </div>
             <div>
               <h2 className="text-lg font-semibold text-white">Upgrade Your Plan</h2>
               <p className="text-xs text-gray-500">Current plan: <span className="capitalize text-gray-300">{currentPlan}</span></p>
@@ -104,23 +119,36 @@ export default function UpgradePlanModal({ currentPlan = 'free', onClose }) {
                 ))}
               </ul>
               <button
-                disabled={currentPlan === plan.name.toLowerCase()}
+                onClick={() => plan.name !== 'Free' && startCheckout(plan.name)}
+                disabled={
+                  currentPlan === plan.name.toLowerCase() ||
+                  plan.name === 'Free' ||
+                  loadingPlan !== null
+                }
                 className={`w-full py-2 rounded-xl text-sm font-medium transition-all ${
-                  currentPlan === plan.name.toLowerCase()
+                  currentPlan === plan.name.toLowerCase() || plan.name === 'Free'
                     ? 'bg-white/5 text-gray-500 cursor-default'
+                    : loadingPlan === plan.name.toLowerCase()
+                    ? 'bg-primary-600/60 text-white cursor-wait'
                     : plan.highlight
                     ? 'bg-primary-600 hover:bg-primary-500 text-white'
                     : 'bg-white/10 hover:bg-white/15 text-white'
                 }`}
               >
-                {currentPlan === plan.name.toLowerCase() ? 'Current Plan' : `Get ${plan.name}`}
+                {currentPlan === plan.name.toLowerCase()
+                  ? 'Current Plan'
+                  : plan.name === 'Free'
+                  ? 'Free Tier'
+                  : loadingPlan === plan.name.toLowerCase()
+                  ? 'Redirecting to Stripe…'
+                  : `Get ${plan.name}`}
               </button>
             </div>
           ))}
         </div>
 
         <p className="text-center text-xs text-gray-600 mt-5">
-          Payment processing coming soon. Contact support to upgrade manually.
+          🔒 Secure checkout powered by Stripe · Test mode — use card <span className="font-mono text-gray-500">4242 4242 4242 4242</span>, any future date &amp; CVC.
         </p>
       </div>
     </div>

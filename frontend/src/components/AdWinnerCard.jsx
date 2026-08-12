@@ -1,4 +1,5 @@
-import { FiExternalLink, FiUsers, FiTrendingUp, FiClock, FiBarChart2, FiZap } from 'react-icons/fi'
+import { FiExternalLink, FiUsers, FiTrendingUp, FiClock, FiBarChart2, FiShoppingCart } from 'react-icons/fi'
+import WinnerIdentifier from './WinnerIdentifier.jsx'
 
 const CATEGORY_COLORS = {
   Electronics:    { bg: 'bg-blue-500/15',   border: 'border-blue-500/25',   text: 'text-blue-400'   },
@@ -16,6 +17,71 @@ const SCORE_CLS = (s) =>
   s >= 60 ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/25' :
   s >= 40 ? 'text-orange-400 bg-orange-500/10 border-orange-500/25' :
             'text-red-400 bg-red-500/10 border-red-500/25'
+
+// 14-day score sparkline + weekly delta — drawn as a tiny inline SVG, no chart lib
+function TrendSparkline({ trend }) {
+  const pts = trend.points
+  const min  = Math.min(...pts.map((p) => p.s))
+  const max  = Math.max(...pts.map((p) => p.s))
+  const span = Math.max(1, max - min)
+  const step = 64 / Math.max(1, pts.length - 1)
+  const path = pts
+    .map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i * step).toFixed(1)} ${(18 - ((p.s - min) / span) * 16).toFixed(1)}`)
+    .join(' ')
+  const color = trend.direction === 'rising' ? '#4ade80' : trend.direction === 'cooling' ? '#f87171' : '#9ca3af'
+  const label = trend.direction === 'rising' ? 'Rising' : trend.direction === 'cooling' ? 'Cooling' : 'Stable'
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 border"
+      style={{ backgroundColor: 'var(--color-ink-3)', borderColor: 'var(--color-ink-4)' }}
+      title={`Score over the last ${pts.length} day(s)`}
+    >
+      <svg viewBox="0 0 64 20" className="w-16 h-5 flex-shrink-0" preserveAspectRatio="none" aria-hidden="true">
+        <path d={path} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="64" cy={(18 - ((pts[pts.length - 1].s - min) / span) * 16).toFixed(1)} r="1.8" fill={color} />
+      </svg>
+      <span
+        className="font-mono-label text-[9px] uppercase tracking-[0.12em]"
+        style={{ color }}
+      >
+        {trend.delta7 > 0 ? `+${trend.delta7}` : trend.delta7} this week · {label}
+      </span>
+    </div>
+  )
+}
+
+// Daraz demand signals — est. orders, competition, avg selling price
+const DEMAND_CHIP = {
+  high:     'text-green-400 bg-green-500/10 border-green-500/25',
+  medium:   'text-yellow-400 bg-yellow-500/10 border-yellow-500/25',
+  low:      'text-gray-400 bg-white/5 border-white/10',
+  emerging: 'text-blue-400 bg-blue-500/10 border-blue-500/25',
+  untapped: 'text-amber-300 bg-amber-500/10 border-amber-500/25',
+}
+const compact = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
+
+function DarazRow({ daraz }) {
+  const chipCls = DEMAND_CHIP[daraz.demandLevel] || DEMAND_CHIP.low
+  const label   = daraz.demandLevel === 'untapped' ? 'Untapped' : `${daraz.demandLevel} demand`
+  return (
+    <div className="rounded-lg px-2.5 py-1.5 border flex items-center justify-between gap-2"
+      style={{ backgroundColor: 'var(--color-ink-3)', borderColor: 'var(--color-ink-4)' }}
+      title="Estimated from live Daraz search results (reviews → orders rule of thumb). Refreshed daily."
+    >
+      <div className="flex items-center gap-1.5 min-w-0">
+        <FiShoppingCart size={10} style={{ color: 'var(--color-moss)' }} className="flex-shrink-0" />
+        <p className="text-[11px] font-body truncate" style={{ color: 'var(--color-smoke)' }}>
+          Daraz: <span className="font-semibold" style={{ color: 'var(--color-bone)' }}>~{compact(daraz.estOrders)}</span> est. orders
+          {' · '}{daraz.listingCount} listings
+          {daraz.avgPrice > 0 && <>{' · '}avg <span className="font-semibold" style={{ color: 'var(--color-bone)' }}>Rs {daraz.avgPrice.toLocaleString()}</span></>}
+        </p>
+      </div>
+      <span className={`flex-shrink-0 font-mono-label text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-full border ${chipCls}`}>
+        {label}
+      </span>
+    </div>
+  )
+}
 
 export default function AdWinnerCard({ product, onViewScore, onViewAI }) {
   const catStyle = CATEGORY_COLORS[product.category] || CATEGORY_COLORS['Electronics']
@@ -60,6 +126,12 @@ export default function AdWinnerCard({ product, onViewScore, onViewAI }) {
         ))}
       </div>
 
+      {/* Score trend — needs at least 2 days of snapshots; hidden until then */}
+      {product.trend?.points?.length >= 2 && <TrendSparkline trend={product.trend} />}
+
+      {/* Daraz demand signals — populated by the throttled daily cron */}
+      {product.daraz && <DarazRow daraz={product.daraz} />}
+
       {/* Proven winner badge */}
       {product.isProvenWinner && (
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-500/8 border border-green-500/20 rounded-lg">
@@ -103,6 +175,9 @@ export default function AdWinnerCard({ product, onViewScore, onViewAI }) {
         </div>
       )}
 
+      {/* AI product identification — from the product's best representative ad */}
+      <WinnerIdentifier productName={product.name} category={product.category} />
+
       {/* Action buttons */}
       <div className="mt-auto flex gap-2 pt-1">
         <button
@@ -122,7 +197,6 @@ export default function AdWinnerCard({ product, onViewScore, onViewAI }) {
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'var(--color-acid)'; e.currentTarget.style.color = 'var(--color-ink)' }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--color-acid)' }}
         >
-          <FiZap size={12} />
           AI Report
         </button>
       </div>

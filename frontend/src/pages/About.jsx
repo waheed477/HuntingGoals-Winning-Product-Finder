@@ -1,4 +1,4 @@
-import { FiTarget, FiZap, FiTrendingUp, FiMapPin } from 'react-icons/fi'
+import { FiTarget, FiTrendingUp, FiMapPin } from 'react-icons/fi'
 import PublicLayout from '../components/PublicLayout.jsx'
 import { Link } from 'react-router-dom'
 
@@ -9,7 +9,7 @@ const FEATURES = [
     body: 'Hunting Goals exists to level the playing field for Pakistani e-commerce sellers. We provide the same product intelligence that large brands pay thousands of dollars for — accessible to every seller, regardless of size.',
   },
   {
-    icon: FiZap,
+    icon: FiTrendingUp,
     title: 'What We Do',
     body: 'We analyze thousands of Facebook and Instagram ads running across Pakistan every day, calculate Win Scores based on advertiser count, longevity, and category demand, and surface the top-performing products before they become oversaturated.',
   },

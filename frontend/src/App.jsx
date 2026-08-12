@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi'
 import Landing from './pages/Landing.jsx'
 import Login from './pages/Login.jsx'
 import VerifyEmail from './pages/VerifyEmail.jsx'
@@ -12,6 +13,7 @@ import CityExplorer from './pages/CityExplorer.jsx'
 import Trends from './pages/Trends.jsx'
 import AdSpy from './pages/AdSpy.jsx'
 import Profile from './pages/Profile.jsx'
+import BillingSuccess from './pages/BillingSuccess.jsx'
 import Notifications from './pages/Notifications.jsx'
 import Layout from './components/Layout.jsx'
 import useStore from './store/useStore.js'
@@ -45,19 +47,22 @@ export default function App() {
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionValidator />
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerStyle={{ top: '50%', transform: 'translateY(-50%)' }}
         toastOptions={{
+          duration: 2000,
           style: {
             background: '#1e1e3f',
             color: '#fff',
             border: '1px solid rgba(255,255,255,0.15)',
             borderRadius: '12px',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
           },
           success: {
-            iconTheme: { primary: '#22c55e', secondary: '#0f2e1a' },
+            icon: <FiCheckCircle size={16} color="#34d399" />,
           },
           error: {
-            iconTheme: { primary: '#f43f5e', secondary: '#1e1e3f' },
+            icon: <FiAlertCircle size={16} color="#fb7185" />,
           },
         }}
       />
@@ -119,6 +124,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Layout><Profile /></Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/billing/success"
+          element={
+            <ProtectedRoute>
+              <Layout><BillingSuccess /></Layout>
             </ProtectedRoute>
           }
         />

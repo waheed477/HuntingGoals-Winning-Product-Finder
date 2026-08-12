@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { FiMail, FiArrowRight, FiRefreshCw } from 'react-icons/fi'
-import toast from '../lib/toast.js'
+import AuthMessage from '../components/AuthMessage.jsx'
 import useStore from '../store/useStore.js'
 
 export default function VerifyEmail() {
@@ -14,6 +14,7 @@ export default function VerifyEmail() {
   const [loading, setLoading] = useState(false)
   const [resendDisabled, setResendDisabled] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const [notice, setNotice]       = useState(null) // inline banner (no popups)
   const inputRefs = useRef([])
 
   useEffect(() => {
@@ -53,7 +54,8 @@ export default function VerifyEmail() {
 
   const handleVerify = async () => {
     const code = otp.join('')
-    if (code.length !== 6) { toast.error('Please enter the 6-digit code'); return }
+    setNotice(null)
+    if (code.length !== 6) { setNotice({ type: 'error', msg: 'Please enter the 6-digit code' }); return }
     setLoading(true)
     try {
       const res = await fetch('/api/auth/verify-email', {
@@ -65,15 +67,14 @@ export default function VerifyEmail() {
       if (data.success) {
         const { user, token } = data.data
         setUser({ ...user, token })
-        toast.success('Email verified! Welcome to Hunting Goals.')
         navigate('/onboarding', { replace: true })
       } else {
-        toast.error(data.error || 'Verification failed')
+        setNotice({ type: 'error', msg: data.error || 'Verification failed' })
         setOtp(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
       }
     } catch {
-      toast.error('Connection error. Please try again.')
+      setNotice({ type: 'error', msg: 'Connection error. Please try again.' })
     } finally {
       setLoading(false)
     }
@@ -82,6 +83,7 @@ export default function VerifyEmail() {
   const handleResend = async () => {
     setResendDisabled(true)
     setCountdown(60)
+    setNotice(null)
     try {
       const res = await fetch('/api/auth/resend-otp', {
         method: 'POST',
@@ -90,16 +92,16 @@ export default function VerifyEmail() {
       })
       const data = await res.json()
       if (data.success) {
-        toast.success('New code sent to your email')
+        setNotice({ type: 'success', msg: 'New code sent to your email' })
         setOtp(['', '', '', '', '', ''])
         inputRefs.current[0]?.focus()
       } else {
-        toast.error(data.error || 'Failed to resend code')
+        setNotice({ type: 'error', msg: data.error || 'Failed to resend code' })
         setResendDisabled(false)
         setCountdown(0)
       }
     } catch {
-      toast.error('Connection error')
+      setNotice({ type: 'error', msg: 'Connection error' })
       setResendDisabled(false)
       setCountdown(0)
     }
@@ -120,6 +122,8 @@ export default function VerifyEmail() {
         </div>
 
         <div className="glass-card p-8 rounded-2xl">
+          {/* Inline auth message */}
+          <div className="mb-4"><AuthMessage notice={notice} /></div>
           <div className="text-center mb-7">
             <div className="w-14 h-14 bg-primary-600/20 border border-primary-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <FiMail size={24} className="text-primary-400" />

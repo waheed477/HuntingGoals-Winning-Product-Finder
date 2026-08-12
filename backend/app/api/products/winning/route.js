@@ -1,6 +1,8 @@
 import { connectDB }                                                                    from '@/lib/db';
 import { getAdBasedWinners, getAdStats, getCityCoverage, backfillCities, backfillSeasons, getSeasonCoverage, cleanFakeAds } from '@/services/adWinningService';
 import { ensureAdsExist }                                                                from '@/services/scraperService';
+import { recordWinnerSnapshots, attachWinnerTrends }                                     from '@/services/winnerTrendService';
+import { attachDarazEstimates }                                                          from '@/services/darazEstimateService';
 
 const PAKISTAN_CITIES = [
   'Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad',
@@ -49,6 +51,13 @@ export async function GET(request) {
       getCityCoverage(),
       getSeasonCoverage(),
     ]);
+
+    // Score history: record today's point (idempotent), then attach the
+    // 14-day sparkline + Rising/Cooling direction to every winner.
+    await recordWinnerSnapshots(products);
+    await attachWinnerTrends(products);
+    // Daraz demand/price signals (read-only here — refreshed by the throttled cron)
+    await attachDarazEstimates(products);
 
     const payload = {
       products:       products.slice(0, limit),

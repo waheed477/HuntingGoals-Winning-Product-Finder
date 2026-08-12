@@ -54,7 +54,7 @@ export default function Notifications() {
         setOffset(off + list.length)
       }
     } catch (err) {
-      console.error('[Notifications] fetch failed:', err)
+      if (import.meta.env.DEV) console.error('[Notifications] fetch failed:', err)
     } finally {
       setLoading(false)
       setFetching(false)

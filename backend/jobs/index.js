@@ -7,3 +7,6 @@ export { startCompetitorJob }    from './competitorJob.js';
 export { startAutoCorrectJob }   from './autoCorrectJob.js';
 export { startTikTokJob }        from './tiktokJob.js';
 export { startDigestJob }        from './digestJob.js';
+export { startSnapshotJob }      from './snapshotJob.js';
+export { startDarazJob }         from './darazJob.js';
+export { startArchiveJob }       from './archiveJob.js';

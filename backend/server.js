@@ -82,6 +82,9 @@ async function main() {
   server.use('/api/scraper',               scraperLimiter);
   server.use('/api/suppliers/scrape',      scraperLimiter);
   server.use('/api/ai',                    aiLimiter);
+  // On-demand AI endpoints (vision/advice calls are costly — anti-spam)
+  server.post('/api/ads/:id/identify',               aiLimiter);
+  server.post('/api/products/:slug/sourcing-advice', aiLimiter);
   server.use('/api/',                      apiLimiter);
 
   // 3. Hand everything off to Next.js

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   FiRefreshCw, FiPlay, FiClock, FiDatabase, FiCheckCircle,
-  FiAlertCircle, FiWifi, FiWifiOff, FiZap,
+  FiAlertCircle, FiWifi, FiWifiOff,
 } from 'react-icons/fi'
 import toast from '../lib/toast.js'
 import useStore from '../store/useStore.js'
@@ -230,7 +230,7 @@ export default function SchedulerDashboard() {
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Ads',      value: stats.totalAds      ?? '—', icon: FiZap,      color: 'text-blue-400' },
+          { label: 'Total Ads',      value: stats.totalAds      ?? '—', icon: FiDatabase, color: 'text-blue-400' },
           { label: 'Total Products', value: stats.totalProducts ?? '—', icon: FiDatabase, color: 'text-orange-400' },
           { label: 'Total Suppliers',value: stats.totalSuppliers?? '—', icon: FiDatabase, color: 'text-purple-400' },
         ].map(({ label, value, icon: Icon, color }) => (
@@ -293,7 +293,7 @@ export default function SchedulerDashboard() {
 
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <FiZap size={11} /> Next run
+                    Next run
                   </span>
                   <span className="text-xs text-gray-400">{timeUntil(nextRun)}</span>
                 </div>

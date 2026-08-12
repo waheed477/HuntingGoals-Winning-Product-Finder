@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   FiPackage, FiTrendingUp, FiBarChart2,
-  FiMapPin, FiRefreshCw, FiZap,
+  FiMapPin, FiRefreshCw,
 } from 'react-icons/fi'
 import SeasonalBanner from '../components/SeasonalBanner.jsx'
 import LocalTrends from './DashboardTabs/LocalTrends.jsx'
@@ -209,7 +209,7 @@ export default function Dashboard() {
           accentColor="var(--color-acid)"
         />
         <StatCard
-          icon={FiZap}
+          icon={FiBarChart2}
           label="Ads Scraped Today"
           value={isLoading ? '—' : (stats?.recentAdsToday ?? 0).toLocaleString()}
           sub="live from Facebook Ad Library"

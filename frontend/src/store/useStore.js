@@ -66,7 +66,7 @@ const useStore = create(
             set({ profile: false })
           }
         } catch (err) {
-          console.error('[fetchProfile]', err)
+          if (import.meta.env.DEV) console.error('[fetchProfile]', err)
           set({ profile: false })
         }
       },
@@ -141,7 +141,7 @@ const useStore = create(
             })
           }
         } catch (err) {
-          console.error('[fetchAlertHistory]', err)
+          if (import.meta.env.DEV) console.error('[fetchAlertHistory]', err)
         }
       },
 

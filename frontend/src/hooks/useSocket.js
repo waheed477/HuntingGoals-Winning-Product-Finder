@@ -93,7 +93,7 @@ export function useSocket() {
     const onConnect    = () => setIsConnected(true)
     const onDisconnect = () => setIsConnected(false)
     const onError      = (err) => {
-      console.warn('[Socket] connect_error:', err.message)
+      if (import.meta.env.DEV) console.warn('[Socket] connect_error:', err.message)
       setIsConnected(false)
     }
 

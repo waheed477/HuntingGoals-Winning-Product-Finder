@@ -31,6 +31,16 @@ const ERROR_STYLE = {
   fontSize:     '14px',
 }
 
+// Well-known server messages → polished user-facing copy (checked first)
+const SERVER_MESSAGE_MAP = [
+  [/invalid credentials/i,               'Incorrect email or password — please try again.'],
+  [/account with this email already exists/i, 'This email is already registered — try signing in instead.'],
+  [/^login failed$/i,                    'Could not sign you in — please try again.'],
+  [/^registration failed$/i,             'Could not create your account — please try again.'],
+  [/otp.*(invalid|expired)|invalid.*otp/i, 'That code is invalid or has expired — request a new one.'],
+  [/please verify your email/i,          'Please verify your email first — we sent you a code.'],
+]
+
 // Technical patterns → user-friendly messages (checked in order)
 const TECHNICAL_PATTERNS = [
   {
@@ -68,6 +78,9 @@ export function friendlyError(input) {
 
   if (!message) return GENERIC_ERROR
 
+  for (const [re, msg] of SERVER_MESSAGE_MAP) {
+    if (re.test(message)) return msg
+  }
   for (const { re, msg } of TECHNICAL_PATTERNS) {
     if (re.test(message)) return msg
   }

@@ -31,7 +31,7 @@ export function useAdsRealtime({ onSchedulerRan } = {}) {
     socketRef.current = socket
 
     socket.on('connect', () => {
-      console.log('[useAdsRealtime] connected')
+      if (import.meta.env.DEV) console.log('[useAdsRealtime] connected')
     })
 
     socket.on('newAdsDetected', ({ count, categories = [] } = {}) => {
@@ -80,7 +80,7 @@ export function useAdsRealtime({ onSchedulerRan } = {}) {
     })
 
     socket.on('connect_error', (err) => {
-      console.warn('[useAdsRealtime] connection error:', err.message)
+      if (import.meta.env.DEV) console.warn('[useAdsRealtime] connection error:', err.message)
     })
 
     return () => {

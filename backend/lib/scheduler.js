@@ -17,6 +17,9 @@ import {
   startAutoCorrectJob,
   startTikTokJob,
   startDigestJob,
+  startSnapshotJob,
+  startDarazJob,
+  startArchiveJob,
 } from '../jobs/index.js';
 
 let initialized = false;
@@ -40,9 +43,12 @@ export function startAllJobs() {
   try { startAutoCorrectJob(); }   catch (err) { console.error('[Scheduler] autoCorrectJob init failed:',   err.message); }
   try { startTikTokJob(); }        catch (err) { console.error('[Scheduler] tiktokJob init failed:',        err.message); }
   try { startDigestJob(); }        catch (err) { console.error('[Scheduler] digestJob init failed:',        err.message); }
+  try { startSnapshotJob(); }      catch (err) { console.error('[Scheduler] snapshotJob init failed:',      err.message); }
+  try { startDarazJob(); }         catch (err) { console.error('[Scheduler] darazJob init failed:',         err.message); }
+  try { startArchiveJob(); }       catch (err) { console.error('[Scheduler] archiveJob init failed:',       err.message); }
 
   initialized = true;
-  console.log(`[${new Date().toISOString()}] [Scheduler] All 9 cron jobs scheduled.`);
+  console.log(`[${new Date().toISOString()}] [Scheduler] All cron jobs scheduled.`);
 }
 
 export default startAllJobs;

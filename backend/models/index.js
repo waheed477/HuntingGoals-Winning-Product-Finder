@@ -8,4 +8,6 @@ export { default as ScrapedAd } from './ScrapedAd.js';
 export { default as SeasonalEvent } from './SeasonalEvent.js';
 export { default as Supplier } from './Supplier.js';
 export { default as ProductHistory }      from './ProductHistory.js';
+export { default as WinnerSnapshot }      from './WinnerSnapshot.js';
+export { default as DarazEstimate }       from './DarazEstimate.js';
 export { default as InAppNotification }   from './InAppNotification.js';

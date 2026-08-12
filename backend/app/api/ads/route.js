@@ -73,6 +73,8 @@ export async function GET(request) {
       imageUrl:    ad.imageUrl      || null,
       directUrl:   ad.directUrl     || (ad.adId ? `https://www.facebook.com/ads/library/?id=${ad.adId}` : null),
       scrapedAt:   ad.scrapedAt,
+      // AI Product Identifier cache (null until a user triggers identification)
+      identifiedProduct: ad.identifiedProduct || null,
       // Real competitor count: distinct advertisers in this ad's category
       competitors: catCompetitors[ad.category] || 0,
     }));
