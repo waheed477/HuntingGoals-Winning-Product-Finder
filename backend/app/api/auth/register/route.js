@@ -2,7 +2,9 @@ import { connectDB } from '@/lib/db';
 import { User } from '@/models/index';
 import { generateToken, buildTokenCookie } from '@/middleware/auth';
 import { isValidEmail } from '@/lib/validators';
-import { sendVerificationOTP } from '@/services/otpService';
+// NOTE (Aug 2026): email-OTP verification was retired — signup now issues a
+// session immediately (Google flow already did). otpService remains on disk
+// but is no longer called from the auth flow.
 
 export async function POST(request) {
   try {
@@ -26,17 +28,8 @@ export async function POST(request) {
 
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
-      if (!existing.emailVerified && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        await sendVerificationOTP(email.toLowerCase()).catch(() => {});
-        return Response.json({
-          success: true,
-          requiresVerification: true,
-          email: email.toLowerCase(),
-          message: 'Account exists but email is unverified. A new code has been sent.',
-        });
-      }
       return Response.json(
-        { success: false, error: 'An account with this email already exists' },
+        { success: false, error: 'An account with this email already exists — please sign in instead' },
         { status: 409 }
       );
     }
@@ -45,24 +38,10 @@ export async function POST(request) {
       name:          name.trim(),
       email:         email.toLowerCase(),
       password,
-      emailVerified: false,
+      emailVerified: true,
     });
 
-    const emailConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
-    if (emailConfigured) {
-      await sendVerificationOTP(user.email);
-      return Response.json(
-        {
-          success: true,
-          requiresVerification: true,
-          email: user.email,
-          message: 'Verification code sent to your email',
-        },
-        { status: 201 }
-      );
-    }
-
-    // Email not configured — skip verification, issue token immediately
+    // Instant session on signup — smooth login, no email round-trip
     const token = generateToken(user._id, user.email);
     return new Response(
       JSON.stringify({
