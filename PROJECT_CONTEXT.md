@@ -265,8 +265,15 @@ Full reference: `backend/.env.example`. Key groups:
 
 ## 9. Deployment (Render free tier)
 
-- `render.yaml` Blueprint → `trendspy-api` (Docker, `/ping` health check, JWT auto-generated)
-  + `trendspy-web` (static, `VITE_API_URL` injected from the API service)
+- **Two supported shapes:**
+  1. **Split (Blueprint)** — `render.yaml` → `trendspy-api` (Docker, `backend/` Dockerfile, `/ping`
+     health check, JWT auto-generated) + `trendspy-web` (static, `VITE_API_URL` injected from the
+     API service).
+  2. **Combined single service** — repo-root `Dockerfile` builds BOTH frontend (Vite →
+     `frontend/dist`) and backend (`next build`); `backend/server.js` detects `../frontend/dist`
+     and serves it with SPA fallback (skipping `/api`, `/socket.io`, `/_next`, `/ping`,
+     `/health`); root `.dockerignore` keeps `node_modules` + any `.env` out of the image.
+     One URL, no `VITE_API_URL` needed (the main.jsx fetch shim is a no-op unset).
 - Dockerfile installs system **Chromium**; `PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=1`,
   `PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium`
 - Free-tier tactics: keep-alive pings, 512 MB-aware scraping (media blocked, staggered jobs),

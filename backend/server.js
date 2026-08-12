@@ -1,5 +1,7 @@
 import 'dotenv/config'; // must run first: loads backend/.env for local dev (no-op on Render where env is injected)
 import { parse, fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import http          from 'http';
 import express       from 'express';
 import next          from 'next';
@@ -87,8 +89,32 @@ async function main() {
   server.post('/api/products/:slug/sourcing-advice', aiLimiter);
   server.use('/api/',                      apiLimiter);
 
-  // 3. Hand everything off to Next.js
+  // 3. Combined single-service deploys (repo-root Dockerfile) build the Vite
+  //    frontend to ../frontend/dist — serve it BEFORE the Next catch-all.
+  //    The folder simply does not exist in classic split-host/localhost dev
+  //    setups (frontend served separately by Vite/Render static site), so this
+  //    block auto-disables and nothing changes there.
+  const distDir = fileURLToPath(new URL('../frontend/dist', import.meta.url));
+  const hasDist = existsSync(join(distDir, 'index.html'));
+  if (hasDist) {
+    server.use(express.static(distDir, { maxAge: '1h' }));
+    console.log('[server] ✅ Serving frontend build from ../frontend/dist (combined mode)');
+  }
+
+  // 3b. Hand everything else off to Next.js — except SPA page loads in
+  //     combined mode, which belong to the frontend's index.html.
   server.all('*', (req, res) => {
+    if (
+      hasDist &&
+      req.method === 'GET' &&
+      !req.path.startsWith('/api') &&
+      !req.path.startsWith('/socket.io') &&
+      !req.path.startsWith('/_next') &&
+      req.path !== '/ping' &&
+      req.path !== '/health'
+    ) {
+      return res.sendFile(join(distDir, 'index.html'));
+    }
     const parsedUrl = parse(req.url, true);
     handle(req, res, parsedUrl);
   });

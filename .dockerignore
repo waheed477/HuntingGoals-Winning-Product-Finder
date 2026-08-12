@@ -1,0 +1,18 @@
+# Keep the build context lean and secrets OUT of the image.
+# (Root Dockerfile copies frontend/ and backend/ wholesale — these exclusions apply.)
+
+**/node_modules
+**/dist
+**/.next
+**/.git
+**/.gitignore
+
+# Never bake secrets into the image
+**/.env
+**/.env.*
+!**/.env.example
+
+# Local cruft
+**/*.log
+**/.DS_Store
+**/coverage
