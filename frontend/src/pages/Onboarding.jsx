@@ -96,10 +96,10 @@ export default function Onboarding() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold">TS</span>
+              <span className="text-white font-bold">HG</span>
             </div>
             <span className="font-bold text-white text-2xl tracking-tight">
-              Trend<span className="text-accent-400">Spy</span>
+              Hunting<span className="text-accent-400">Goals</span>
             </span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Let's personalize your experience</h1>

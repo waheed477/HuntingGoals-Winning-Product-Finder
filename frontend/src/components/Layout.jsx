@@ -3,7 +3,6 @@ import { FiGrid, FiSearch, FiEye, FiUser } from 'react-icons/fi'
 import Navbar from './Navbar.jsx'
 import Sidebar from './Sidebar.jsx'
 import Footer from './Footer.jsx'
-import WelcomeTour from './WelcomeTour.jsx'
 import { useSocket } from '../hooks/useSocket.js'
 
 const BOTTOM_NAV = [
@@ -27,8 +26,7 @@ export default function Layout({ children }) {
         </main>
       </div>
 
-      {/* First-visit welcome tour (floating, non-blocking) */}
-      <WelcomeTour />
+      {/* Welcome tour now mounts globally in App.jsx (covers onboarding too) */}
 
       {/* Mobile bottom navigation */}
       <nav

@@ -16,6 +16,7 @@ import Profile from './pages/Profile.jsx'
 import BillingSuccess from './pages/BillingSuccess.jsx'
 import Notifications from './pages/Notifications.jsx'
 import Layout from './components/Layout.jsx'
+import WelcomeTour from './components/WelcomeTour.jsx'
 import useStore from './store/useStore.js'
 import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 import TermsOfService from './pages/TermsOfService.jsx'
@@ -46,6 +47,8 @@ export default function App() {
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <SessionValidator />
+      {/* Signup-only welcome tour — global so it also opens over onboarding */}
+      <WelcomeTour />
       <Toaster
         position="top-center"
         containerStyle={{ top: '50%', transform: 'translateY(-50%)' }}

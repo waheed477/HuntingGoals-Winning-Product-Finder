@@ -91,6 +91,8 @@ export default function Login() {
       setNotice({ type: 'success', msg: `Welcome${isSignup ? '' : ' back'}, ${user.name || user.email.split('@')[0]}!` })
 
       if (isSignup) {
+        // Arm the one-shot welcome tour (consumed by WelcomeTour on mount)
+        try { localStorage.setItem('hg_tour_pending', '1') } catch { /* ignore */ }
         navigate('/onboarding')
       } else {
         try {

@@ -10,6 +10,7 @@ import { FiX, FiChevronRight, FiChevronLeft, FiSearch, FiBarChart2, FiTarget, Fi
  */
 
 const STORAGE_KEY = 'hg_welcome_tour_seen'
+const PENDING_KEY = 'hg_tour_pending'   // set once by Login.jsx on fresh signup
 const OPEN_EVENT  = 'hg:open-tour'
 
 const STEPS = [
@@ -48,10 +49,14 @@ export default function WelcomeTour() {
   const [step, setStep]   = useState(0)
   const [leaving, setLeaving] = useState(false)
 
-  // First visit only — or when the sidebar "?" asks for a replay
+  // Auto-open ONLY right after a brand-new signup (Login.jsx plants a
+  // one-shot "pending" flag). Plain logins never reopen the tour; the
+  // sidebar "?" button still replays it via the OPEN_EVENT listener below.
   useEffect(() => {
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
+      if (localStorage.getItem(PENDING_KEY) === '1') {
+        localStorage.removeItem(PENDING_KEY)       // consume — one shot only
+        localStorage.setItem(STORAGE_KEY, '1')     // legacy key stays quiet too
         const t = setTimeout(() => setOpen(true), 800) // let the page settle first
         return () => clearTimeout(t)
       }
