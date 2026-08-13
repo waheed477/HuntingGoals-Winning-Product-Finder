@@ -219,8 +219,21 @@ const JOB_MAP = {
 export function triggerAutoScraper(scraper) {
   const job = JOB_MAP[scraper];
   if (!job) return null;
+
+  // Concurrency guard: a manual trigger while a scrape is already in flight
+  // (e.g. a cron job running Chromium) would stack two heavy scrapes on a
+  // 512 MB instance → OOM/segfault (exit 139) and a 502 for the caller.
+  // Skip politely instead; the next cron run covers the data.
+  if (globalThis.__hgScrapeBusy) {
+    console.log(`[Scheduler] Manual trigger "${scraper}" skipped — another scrape is already running`);
+    return scraper;
+  }
+
+  globalThis.__hgScrapeBusy = true;
   // Fire-and-forget (same semantics as the old /scheduler/trigger endpoint)
-  job().catch((e) => console.error(`[Scheduler] Manual trigger "${scraper}" failed:`, e.message));
+  job()
+    .catch((e) => console.error(`[Scheduler] Manual trigger "${scraper}" failed:`, e.message))
+    .finally(() => { globalThis.__hgScrapeBusy = false });
   return scraper;
 }
 

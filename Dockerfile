@@ -59,8 +59,13 @@ COPY backend ./backend
 RUN cd backend && npm run build                # Next.js production build (.next)
 
 ENV NODE_ENV=production
+# 512 MB instance: cap V8's heap so memory pressure throws a recoverable JS
+# error instead of a native crash (exit 139 = SIGSEGV)
+ENV NODE_OPTIONS=--max-old-space-size=400
 # Render injects PORT at runtime; server.js reads process.env.PORT
 EXPOSE 10000
 
 WORKDIR /app/backend
-CMD ["node", "server.js"]
+# Force production at runtime regardless of any dashboard/env overrides —
+# Next dev mode keeps webpack compilers in RAM and OOM-crashes free instances.
+CMD ["sh", "-c", "exec env NODE_ENV=production node server.js"]

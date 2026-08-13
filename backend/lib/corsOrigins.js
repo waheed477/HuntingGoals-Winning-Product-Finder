@@ -27,6 +27,14 @@ export function getAllowedOrigins() {
 
   const origins = new Set(fromEnv);
 
+  // Render injects RENDER_EXTERNAL_URL into every web service automatically —
+  // in the combined single-service deploy the frontend IS this origin, so the
+  // Socket.io handshake's Origin header is this exact URL. Without this line
+  // the allow-list rejects the app's own sockets when FRONTEND_URL is unset.
+  if (process.env.RENDER_EXTERNAL_URL) {
+    origins.add(process.env.RENDER_EXTERNAL_URL.trim().replace(/\/+$/, ''));
+  }
+
   if (process.env.NODE_ENV !== 'production') {
     DEV_ORIGINS.forEach((o) => origins.add(o));
   }
