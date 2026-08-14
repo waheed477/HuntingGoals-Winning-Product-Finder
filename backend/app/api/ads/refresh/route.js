@@ -35,24 +35,29 @@ export async function POST(request) {
     for (const ad of ads) {
       if (!ad.adId) continue;
       try {
+        // Never clobber an existing creative with empty values: ads re-fetched
+        // via the official API without media keep their previously saved image
+        // instead of being overwritten with ''.
+        const setFields = {
+          advertiserName: ad.advertiserName,
+          headline:       ad.headline,
+          description:    ad.description || '',
+          daysRunning:    ad.daysRunning || 0,
+          creativeType:   ad.creativeType || 'image',
+          spendLevel:     ad.spendLevel   || 'low',
+          platform:       ad.platform     || 'facebook',
+          category:       ad.category     || category,
+          directUrl:      ad.directUrl    || '',
+          isActive:       true,
+          scrapedAt:      new Date(),
+        };
+        if (ad.imageUrl) setFields.imageUrl = ad.imageUrl;
+        if (ad.videoUrl) setFields.videoUrl = ad.videoUrl;
+
         const existing = await ScrapedAd.findOneAndUpdate(
           { adId: ad.adId },
           {
-            $set: {
-              advertiserName: ad.advertiserName,
-              headline:       ad.headline,
-              description:    ad.description || '',
-              daysRunning:    ad.daysRunning || 0,
-              creativeType:   ad.creativeType || 'image',
-              spendLevel:     ad.spendLevel   || 'low',
-              imageUrl:       ad.imageUrl     || '',
-              videoUrl:       ad.videoUrl     || '',
-              platform:       ad.platform     || 'facebook',
-              category:       ad.category     || category,
-              directUrl:      ad.directUrl    || '',
-              isActive:       true,
-              scrapedAt:      new Date(),
-            },
+            $set: setFields,
             $setOnInsert: { firstSeenAt: new Date() },
           },
           { upsert: true, new: false }

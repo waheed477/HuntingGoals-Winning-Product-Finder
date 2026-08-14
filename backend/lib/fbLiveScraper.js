@@ -387,7 +387,50 @@ const ADLIB_FIELDS = [
   'ad_delivery_start_time',
   'ad_delivery_stop_time',
   'publisher_platforms',
+  'ad_snapshot_url',
 ].join(',');
+
+// ─── Snapshot media resolver ────────────────────────────────────────────────
+// The official API returns no direct image URL, but every ad's public
+// snapshot page carries <meta property="og:image" …> (and og:video for video
+// creatives). One lightweight GET per ad recovers the real creative media.
+
+export function extractOgMedia(html) {
+  if (typeof html !== 'string' || !html) return { image: '', video: '' };
+  const pick = (prop) => {
+    const m = html.match(new RegExp(`<meta[^>]+property=["']og:${prop}["'][^>]+content=["']([^"']+)["']`, 'i'))
+           || html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:${prop}["']`, 'i'));
+    return m ? m[1] : '';
+  };
+  return { image: pick('image'), video: pick('video') };
+}
+
+async function resolveSnapshotImages(ads) {
+  const need = ads.filter((a) => a.snapshotUrl && !a.imageUrl).slice(0, 30);
+  if (need.length === 0) return ads;
+
+  let done = 0, failed = 0;
+  for (const ad of need) {
+    try {
+      const res = await axios.get(ad.snapshotUrl, {
+        timeout: 8000,
+        responseType: 'text',
+        validateStatus: () => true,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      });
+      if (res.status === 200 && typeof res.data === 'string') {
+        const { image, video } = extractOgMedia(res.data);
+        if (image) ad.imageUrl = image;
+        if (video) ad.videoUrl = video;
+        if (image || video) { done++; } else { failed++; }
+      } else { failed++; }
+    } catch { failed++; }
+    // polite pacing — ~3 ads/sec, keeps the run inside free-tier RAM
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  console.log(`[FB API] snapshot images resolved for ${done}/${need.length} ad(s)${failed ? ` (${failed} snapshot page(s) gave no og:image)` : ''}`);
+  return ads;
+}
 
 async function fetchFbAdsViaOfficialApi(searchTerm, category) {
   const params = new URLSearchParams({
@@ -417,7 +460,7 @@ async function fetchFbAdsViaOfficialApi(searchTerm, category) {
     const rows = Array.isArray(data) ? data : [];
     console.log(`[FB API] "${searchTerm}" → ${rows.length} ad(s) via official Ad Library API`);
 
-    return rows.map((row) => {
+    const ads = rows.map((row) => {
       const adId      = String(row.id || '');
       const bodyText  = (row.ad_creative_bodies?.[0] || '').replace(/\n/g, ' ').trim().slice(0, 300);
       const title     = (row.ad_creative_link_titles?.[0] || '').slice(0, 300);
@@ -435,9 +478,10 @@ async function fetchFbAdsViaOfficialApi(searchTerm, category) {
         headline,
         description:    linkDesc,
         daysRunning,
-        creativeType:   'image',     // API tiers above Basic don't expose media kind
-        imageUrl:       '',          // nor direct media URLs — snapshot page would
+        creativeType:   'image',            // refined below when og:video exists
+        imageUrl:       '',                 // filled by resolveSnapshotImages()
         videoUrl:       '',
+        snapshotUrl:    row.ad_snapshot_url || '', // URL embeds the OAuth token — never log it raw
         spendLevel:     spendLevel(daysRunning),
         platform:       platforms.length ? platforms.join(',') : 'facebook',
         category,
@@ -445,6 +489,13 @@ async function fetchFbAdsViaOfficialApi(searchTerm, category) {
         scrapedAt:      new Date().toISOString(),
       };
     }).filter((a) => isValidAdId(a.adId) && a.headline && a.headline.length >= 5);
+
+    await resolveSnapshotImages(ads);
+    for (const ad of ads) {
+      if (ad.videoUrl && ad.creativeType === 'image') ad.creativeType = 'video';
+      delete ad.snapshotUrl; // token-embedded helper — never persisted
+    }
+    return ads;
   } catch (err) {
     console.warn(`[FB API] "${searchTerm}" request failed: ${err.message}`);
     return [];
