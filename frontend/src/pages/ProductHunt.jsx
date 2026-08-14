@@ -24,6 +24,89 @@ async function fetchAdWinners(city, bust) {
   return body.data
 }
 
+/* Latest raw ads strip — shown when winner categories haven't formed yet,
+   so the tab always shows what scraping actually pulled. */
+function RecentAdsStrip({ ads }) {
+  if (!ads || ads.length === 0) return null
+  return (
+    <div className="mt-10">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="font-display font-bold text-lg" style={{ color: 'var(--color-bone)' }}>
+            Latest Hunted Ads
+          </h2>
+          <p className="text-xs" style={{ color: 'var(--color-moss)' }}>
+            Freshly scraped — winner categories form automatically as more advertisers accumulate
+          </p>
+        </div>
+        <span
+          className="font-mono-label text-[10px] uppercase tracking-[0.2em] px-3 py-1.5 rounded-full border"
+          style={{ color: 'var(--color-acid)', borderColor: 'rgba(200,245,66,0.25)', backgroundColor: 'rgba(200,245,66,0.06)' }}
+        >
+          {ads.length} ads
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {ads.map((ad) => (
+          <a
+            key={ad.adId}
+            href={ad.directUrl || '#'}
+            target="_blank"
+            rel="noreferrer"
+            className="glass-card p-4 block transition-all hover:-translate-y-0.5"
+          >
+            {ad.imageUrl ? (
+              <img
+                src={ad.imageUrl}
+                alt=""
+                className="w-full h-32 object-cover rounded-lg mb-3"
+                loading="lazy"
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            ) : (
+              <div
+                className="w-full h-32 rounded-lg mb-3 flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-ink-3)' }}
+              >
+                <span className="font-mono-label text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-moss)' }}>
+                  {ad.creativeType === 'video' ? '▶ video ad' : 'facebook ad'}
+                </span>
+              </div>
+            )}
+            <p
+              className="text-sm leading-snug mb-2 line-clamp-2"
+              style={{ color: 'var(--color-bone)' }}
+            >
+              {ad.headline}
+            </p>
+            <div className="flex items-center justify-between text-[11px]" style={{ color: 'var(--color-moss)' }}>
+              <span className="truncate mr-2">{ad.advertiserName}</span>
+              <span className="flex-shrink-0">{ad.daysRunning}d running</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span
+                className="font-mono-label text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full border"
+                style={{
+                  color: ad.spendLevel === 'high' ? 'var(--color-acid)' : 'var(--color-smoke)',
+                  borderColor: ad.spendLevel === 'high' ? 'rgba(200,245,66,0.3)' : 'var(--color-ink-4)',
+                }}
+              >
+                {ad.spendLevel} spend
+              </span>
+              {ad.category && (
+                <span className="font-mono-label text-[9px] uppercase tracking-wider" style={{ color: 'var(--color-moss)' }}>
+                  {ad.category}
+                </span>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function StatsBanner({ stats, selectedCity, cityCoverage, lastUpdated, isFetching, onRefresh, scraping, onScrape }) {
   const updated   = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' })
@@ -314,7 +397,10 @@ export default function ProductHunt() {
           ))}
         </div>
       ) : adWinners.length === 0 ? (
-        <EmptyState city={selectedCity} onScrape={triggerScrape} scraping={scraping} />
+        <>
+          <EmptyState city={selectedCity} onScrape={triggerScrape} scraping={scraping} />
+          <RecentAdsStrip ads={adsData?.recentAds || []} />
+        </>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

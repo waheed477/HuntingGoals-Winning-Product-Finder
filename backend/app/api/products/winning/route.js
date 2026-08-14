@@ -3,6 +3,7 @@ import { getAdBasedWinners, getAdStats, getCityCoverage, backfillCities, backfil
 import { ensureAdsExist }                                                                from '@/services/scraperService';
 import { recordWinnerSnapshots, attachWinnerTrends }                                     from '@/services/winnerTrendService';
 import { attachDarazEstimates }                                                          from '@/services/darazEstimateService';
+import { ScrapedAd }                                                                     from '@/models/index';
 
 const PAKISTAN_CITIES = [
   'Karachi','Lahore','Islamabad','Rawalpindi','Faisalabad',
@@ -59,10 +60,23 @@ export async function GET(request) {
     // Daraz demand/price signals (read-only here — refreshed by the throttled cron)
     await attachDarazEstimates(products);
 
+    // Always surface the freshest raw ads too — the winner view needs multiple
+    // advertisers/terms before categories form, so this keeps the tab alive on
+    // day one (and shows exactly what the last scrape pulled).
+    const recentAds = await ScrapedAd.find({
+      isActive: true,
+      headline: { $ne: null, $exists: true },
+    })
+      .sort({ scrapedAt: -1, _id: -1 })
+      .limit(24)
+      .select('adId advertiserName headline description imageUrl videoUrl daysRunning spendLevel creativeType platform category city directUrl scrapedAt')
+      .lean();
+
     const payload = {
       products:       products.slice(0, limit),
       total:          products.length,
       stats,
+      recentAds,
       cityCoverage,
       seasonCoverage,
       cityFilter:     city   || null,
@@ -85,6 +99,7 @@ export async function GET(request) {
         products:       [],
         total:          0,
         stats:          { totalAds: 0, uniqueAdvertisers: 0, categories: 0, maxDaysRunning: 0, lastScraped: null },
+        recentAds:      [],
         cityCoverage:   {},
         seasonCoverage: {},
         cityFilter:     null,

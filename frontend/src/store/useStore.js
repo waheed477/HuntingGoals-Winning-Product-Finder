@@ -38,11 +38,17 @@ const useStore = create(
             headers: { Authorization: `Bearer ${token}` },
           })
           if (!res.ok) {
-            set({ user: null, profile: null, alertHistory: [] })
+            // Only a genuine auth rejection ends the session. During Render
+            // restarts/crashes the API answers 5xx/502 — keep the user signed
+            // in and let their next action retry, instead of logging them out.
+            if (res.status === 401 || res.status === 403) {
+              set({ user: null, profile: null, alertHistory: [] })
+            }
             return false
           }
           return true
         } catch {
+          // Network failure (offline / instance briefly down) — keep session.
           return false
         }
       },
