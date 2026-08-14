@@ -1,3 +1,7 @@
+// force-dynamic: without this, next build PRERENDERS GET handlers inside Docker
+// (no MONGODB_URI at build time) and the frozen fallback response is served forever.
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/tiktok/auth  — force-refresh the TikTok access token
  * GET  /api/tiktok/auth  — return current token status (no secret values exposed)

@@ -1,3 +1,7 @@
+// force-dynamic: without this, next build PRERENDERS GET handlers inside Docker
+// (no MONGODB_URI at build time) and the frozen fallback response is served forever.
+export const dynamic = 'force-dynamic';
+
 const GOOGLE_CLIENT_ID  = process.env.GOOGLE_CLIENT_ID;
 const REDIRECT_URI      = process.env.GOOGLE_REDIRECT_URI
   || 'http://localhost:3001/api/auth/google/callback';

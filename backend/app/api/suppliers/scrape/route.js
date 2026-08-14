@@ -1,3 +1,7 @@
+// force-dynamic: without this, next build PRERENDERS GET handlers inside Docker
+// (no MONGODB_URI at build time) and the frozen fallback response is served forever.
+export const dynamic = 'force-dynamic';
+
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
