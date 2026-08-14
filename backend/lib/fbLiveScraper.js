@@ -335,8 +335,8 @@ async function tryJsonApiFallback(searchTerm, category) {
 
 /**
  * Scrape the FB Ad Library for a search term.
- * Tries the authenticated Puppeteer session first, then the
- * unauthenticated JSON API. Never throws — returns [] on failure.
+ * Order: official Ad Library API (FB_ACCESS_TOKEN) → authenticated Puppeteer
+ * session → unauthenticated JSON endpoint. Never throws — returns [] on failure.
  *
  * Side effect (preserved from the old socket-server endpoint): when ads are
  * found, a `newAdsDetected` event is broadcast over the in-process Socket.io.
@@ -344,8 +344,20 @@ async function tryJsonApiFallback(searchTerm, category) {
 export async function scrapeFbAds(searchTerm, category) {
   console.log(`[FB Scraper] Request: "${searchTerm}" category="${category}"`);
 
-  let ads = await scrapeFbAdsWithCookie(searchTerm, category);
+  let ads = [];
 
+  // 1) Official Meta Ad Library API — works from datacenter IPs, no cookies,
+  //    no Chromium. Preferred when FB_ACCESS_TOKEN is set.
+  if (process.env.FB_ACCESS_TOKEN) {
+    ads = await fetchFbAdsViaOfficialApi(searchTerm, category);
+  }
+
+  // 2) Authenticated Puppeteer session (local-style fallback)
+  if (ads.length === 0) {
+    ads = await scrapeFbAdsWithCookie(searchTerm, category);
+  }
+
+  // 3) Unauthenticated JSON API last-ditch fallback
   if (ads.length === 0) {
     console.log('[FB Scraper] Trying JSON API fallback…');
     ads = await tryJsonApiFallback(searchTerm, category);
@@ -358,6 +370,85 @@ export async function scrapeFbAds(searchTerm, category) {
   }
 
   return ads;
+}
+
+/**
+ * Official Meta Ad Library API — the sanctioned HTTPS path (graph.facebook.com
+ * /ads_archive). Reliable from datacenter IPs; no cookies or Chromium needed.
+ * Token errors (expired ~60-day user tokens, rate limits) log clearly and
+ * return [] so the cookie/JSON fallbacks take over — the pipeline never dies.
+ */
+const ADLIB_FIELDS = [
+  'id',
+  'page_name',
+  'ad_creative_bodies',
+  'ad_creative_link_titles',
+  'ad_creative_link_descriptions',
+  'ad_delivery_start_time',
+  'ad_delivery_stop_time',
+  'publisher_platforms',
+].join(',');
+
+async function fetchFbAdsViaOfficialApi(searchTerm, category) {
+  const params = new URLSearchParams({
+    access_token:         process.env.FB_ACCESS_TOKEN,
+    search_terms:         searchTerm,
+    ad_reached_countries: "['PK']",
+    ad_active_status:     'ALL',
+    ad_type:              'ALL',
+    fields:               ADLIB_FIELDS,
+    limit:                '50',
+  });
+
+  try {
+    const res  = await axios.get(`https://graph.facebook.com/v21.0/ads_archive?${params}`, {
+      timeout: 25000, validateStatus: () => true,
+    });
+    const { data, error } = res.data || {};
+
+    if (error) {
+      const hint =
+        error.code === 190              ? ' — token invalid/expired; regenerate FB_ACCESS_TOKEN (Graph API Explorer)' :
+        [4, 17, 32, 613, 80004].includes(error.code) ? ' — rate limited; the next scheduled run will retry' : '';
+      console.warn(`[FB API] "${searchTerm}" error ${error.code}: ${error.message}${hint}`);
+      return [];
+    }
+
+    const rows = Array.isArray(data) ? data : [];
+    console.log(`[FB API] "${searchTerm}" → ${rows.length} ad(s) via official Ad Library API`);
+
+    return rows.map((row) => {
+      const adId      = String(row.id || '');
+      const bodyText  = (row.ad_creative_bodies?.[0] || '').replace(/\n/g, ' ').trim().slice(0, 300);
+      const title     = (row.ad_creative_link_titles?.[0] || '').slice(0, 300);
+      const linkDesc  = (row.ad_creative_link_descriptions?.[0] || '').slice(0, 500);
+      const headline  = bodyText || title || linkDesc;
+
+      const startMs     = row.ad_delivery_start_time ? Date.parse(row.ad_delivery_start_time) : 0;
+      const daysRunning = startMs ? Math.floor((Date.now() - startMs) / 86400000) : 0;
+      const platforms   = (row.publisher_platforms || []).map((p) => String(p).toLowerCase());
+
+      return {
+        adId,
+        directUrl:      buildDirectUrl(adId),
+        advertiserName: row.page_name || 'Unknown',
+        headline,
+        description:    linkDesc,
+        daysRunning,
+        creativeType:   'image',     // API tiers above Basic don't expose media kind
+        imageUrl:       '',          // nor direct media URLs — snapshot page would
+        videoUrl:       '',
+        spendLevel:     spendLevel(daysRunning),
+        platform:       platforms.length ? platforms.join(',') : 'facebook',
+        category,
+        city:           extractCity(headline, linkDesc, row.page_name),
+        scrapedAt:      new Date().toISOString(),
+      };
+    }).filter((a) => isValidAdId(a.adId) && a.headline && a.headline.length >= 5);
+  } catch (err) {
+    console.warn(`[FB API] "${searchTerm}" request failed: ${err.message}`);
+    return [];
+  }
 }
 
 export { isValidAdId, buildDirectUrl, extractCity };
