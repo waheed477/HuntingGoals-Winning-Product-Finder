@@ -202,8 +202,9 @@ async function scrapeFbAdsWithCookie(searchTerm, category) {
 
     // ── Intercept FB GraphQL/XHR responses that carry ad data ─────────────
     // FB Ad Library loads ads via async XHR (not in the initial HTML).
-    // We intercept every response whose body contains "collated_results".
+    // We capture every facebook.com response whose body contains ad markers.
     const interceptedChunks = [];
+    let candidateResponses = 0; // diagnostic: how many JSON-ish responses did FB send at all
 
     page.on('response', async (response) => {
       const url = response.url();
@@ -211,22 +212,37 @@ async function scrapeFbAdsWithCookie(searchTerm, category) {
       // Only look at likely API/document responses
       const ct = response.headers()['content-type'] || '';
       if (!ct.includes('json') && !ct.includes('javascript') && !ct.includes('text')) return;
+      candidateResponses++;
       try {
         const text = await response.text();
-        if (text.includes('collated_results') || text.includes('ad_archive_id')) {
+        if (text.includes('collated_results') || text.includes('ad_archive_id') || text.includes('ad_library_id')) {
           interceptedChunks.push(text);
         }
       } catch { /* ignore */ }
     });
 
-    const adLibUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=PK&q=${encodeURIComponent(searchTerm)}&search_type=keyword_unordered`;
+    const adLibUrl = `https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=PK&locale=en_US&q=${encodeURIComponent(searchTerm)}&search_type=keyword_unordered`;
     console.log(`[FB Scraper] Navigating: "${searchTerm}"`);
     await page.goto(adLibUrl, { waitUntil: 'networkidle2', timeout: 45000 });
 
-    // Give React time to fire its initial data fetch
-    await new Promise((r) => setTimeout(r, 4000));
+    // Diagnostics: if FB bounced us to login/checkpoint (expired cookie or an
+    // IP challenge), say so plainly — saves hours of blind debugging.
+    const landedUrl   = page.url();
+    const landedTitle = await page.title().catch(() => '');
+    if (/checkpoint|login/i.test(landedUrl) || /log in|checkpoint/i.test(landedTitle)) {
+      console.warn(`[FB Scraper] ⚠️  Landed on "${landedTitle}" (${landedUrl.slice(0, 80)}) — session cookie rejected or IP challenged; ads cannot load this way.`);
+    }
 
-    console.log(`[FB Scraper] Intercepted ${interceptedChunks.length} response chunk(s) containing ad data`);
+    // Give React time to fire its initial fetch, then SCROLL — the Ad Library
+    // lazy-loads result batches on scroll; without scrolling many GraphQL
+    // responses never fire (a common cause of "0 ads" on server runs).
+    await new Promise((r) => setTimeout(r, 5000));
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate(() => window.scrollBy(0, 2400)).catch(() => {});
+      await new Promise((r) => setTimeout(r, 1800));
+    }
+
+    console.log(`[FB Scraper] Intercepted ${interceptedChunks.length} ad-data chunk(s) out of ${candidateResponses} candidate JSON response(s)`);
 
     // Extract ads from every intercepted chunk
     const seenIds = new Set();

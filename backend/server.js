@@ -80,6 +80,7 @@ async function main() {
   server.use('/api/auth/login',            authLimiter);
   server.use('/api/auth/register',         authLimiter);
   server.use('/api/auth/forgot-password',  authLimiter);
+  server.use('/api/auth/magic-link',       authLimiter);
   server.use('/api/ads/refresh',           scraperLimiter);
   server.use('/api/scraper',               scraperLimiter);
   server.use('/api/suppliers/scrape',      scraperLimiter);
