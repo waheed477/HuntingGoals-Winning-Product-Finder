@@ -4,14 +4,22 @@ import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight, FiUser, FiShield } from 
 import AuthMessage from '../components/AuthMessage.jsx'
 import useStore from '../store/useStore.js'
 
+function GoogleIcon() {
+  return (
+    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48">
+      <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+      <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
+      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+    </svg>
+  )
+}
+
 const GOOGLE_ERROR_MESSAGES = {
   google_cancelled: 'Google sign-in was cancelled.',
   google_token:     'Failed to complete Google sign-in. Please try again.',
   google_no_email:  'Google did not share an email address.',
   google_server:    'A server error occurred during Google sign-in.',
-  magic_invalid:    'That sign-in link is invalid or was already used — request a fresh one.',
-  magic_expired:    'That sign-in link expired — request a fresh one.',
-  magic_server:     'A server error occurred while verifying your link. Please try again.',
 }
 
 export default function Login() {
@@ -29,32 +37,26 @@ export default function Login() {
 
   useEffect(() => {
     const googleStatus = searchParams.get('google')
-    const magicStatus  = searchParams.get('magic')
     const token        = searchParams.get('token')
     const name         = searchParams.get('name')
     const error        = searchParams.get('error')
 
-    if (error) { setNotice({ type: 'error', msg: GOOGLE_ERROR_MESSAGES[error] || 'Sign-in failed.' }); return }
+    if (error) { setNotice({ type: 'error', msg: GOOGLE_ERROR_MESSAGES[error] || 'Google sign-in failed.' }); return }
 
-    if ((googleStatus === 'success' || magicStatus === 'success') && token) {
+    if (googleStatus === 'success' && token) {
       const displayName = decodeURIComponent(name || '')
       setGoogleLoading(true)
       fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
-        .then(async (data) => {
+        .then((data) => {
           if (data.success) {
             setUser({ ...data.data.user, token })
-            // Route fresh accounts to onboarding, returning users straight in
-            try {
-              const s = await fetch('/api/user/onboarding/status', { headers: { Authorization: `Bearer ${token}` } })
-              const sj = await s.json()
-              navigate(sj.data?.needsOnboarding ? '/onboarding' : '/dashboard')
-            } catch { navigate('/dashboard') }
+            navigate('/dashboard')
           } else {
             setNotice({ type: 'error', msg: 'Session error. Please try again.' })
           }
         })
-        .catch(() => setNotice({ type: 'error', msg: 'Connection error after sign-in.' }))
+        .catch(() => setNotice({ type: 'error', msg: 'Connection error after Google sign-in.' }))
         .finally(() => setGoogleLoading(false))
     }
   }, [])
@@ -111,34 +113,7 @@ export default function Login() {
     }
   }
 
-  // Magic Link — passwordless sign-in via email (Brevo-backed on the server).
-  // (Google OAuth button removed; backend routes stay available for later.)
-  const [magicLoading, setMagicLoading] = useState(false)
-  const handleMagicLink = async () => {
-    setNotice(null)
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setNotice({ type: 'error', msg: 'Type your email in the field below first, then tap "Sign in with Magic Link".' })
-      return
-    }
-    setMagicLoading(true)
-    try {
-      const res  = await fetch('/api/auth/magic-link', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setNotice({ type: 'success', msg: `Magic link sent to ${email} — open your inbox and tap it (valid 15 min). One tap signs you in.` })
-      } else {
-        setNotice({ type: 'error', msg: data.error || 'Could not send the link — please try again.' })
-      }
-    } catch {
-      setNotice({ type: 'error', msg: 'Connection error. Please try again.' })
-    } finally {
-      setMagicLoading(false)
-    }
-  }
+  const handleGoogleSignIn = () => { window.location.href = '/api/auth/google/start' }
 
   /* Input field style */
   const inputClass = `
@@ -198,11 +173,10 @@ export default function Login() {
           className="rounded-2xl p-6 border"
           style={{ backgroundColor: 'var(--color-ink-2)', borderColor: 'var(--color-ink-4)' }}
         >
-          {/* Magic Link Sign-In (replaces Google — one tap from your inbox) */}
+          {/* Google Sign-In */}
           <button
-            onClick={handleMagicLink}
-            disabled={magicLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border text-sm font-body font-medium transition-all duration-200 mb-5 disabled:opacity-60"
+            onClick={handleGoogleSignIn}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border text-sm font-body font-medium transition-all duration-200 mb-5"
             style={{
               backgroundColor: 'var(--color-ink-3)',
               borderColor: 'var(--color-ink-4)',
@@ -211,12 +185,8 @@ export default function Login() {
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-smoke)' }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-ink-4)' }}
           >
-            {magicLoading ? (
-              <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'var(--color-moss)', borderTopColor: 'var(--color-acid)' }} />
-            ) : (
-              <FiMail size={18} style={{ color: 'var(--color-acid)' }} />
-            )}
-            {magicLoading ? 'Sending your link…' : 'Sign in with Magic Link'}
+            <GoogleIcon />
+            Continue with Google
           </button>
 
           <div className="flex items-center gap-3 mb-5">
