@@ -38,32 +38,49 @@ const FB_ADS_QUERIES = [
   { searchTerm: 'mobile accessories Pakistan',   category: 'Electronics' },
   { searchTerm: 'handbag fashion Pakistan',      category: 'Fashion'     },
   { searchTerm: 'shoes sneakers Pakistan',       category: 'Fashion'     },
+  { searchTerm: 'men kurta shalwar Pakistan',    category: 'Fashion'     },
   { searchTerm: 'skin care beauty Pakistan',     category: 'Beauty'      },
+  { searchTerm: 'hair care products Pakistan',   category: 'Beauty'      },
   { searchTerm: 'home appliances Pakistan',      category: 'Home'        },
+  { searchTerm: 'kitchen gadgets Pakistan',      category: 'Home'        },
   { searchTerm: 'sports equipment Pakistan',     category: 'Sports'      },
+  { searchTerm: 'fitness gym accessories Pakistan', category: 'Sports'   },
 ];
 
+// Overlap guard — a run in progress must never be re-entered (protects the
+// single Render service from stacked scrapes if a previous run overruns).
+let fbJobRunning = false;
+
 export async function runFacebookAdsJob() {
-  console.log('[Scheduler] FB Ads job starting...');
-  let totalSaved = 0; let errors = 0;
-  for (const q of FB_ADS_QUERIES) {
-    try {
-      const res = await axios.post(`${SELF_API()}/api/ads/refresh`, q, { timeout: 90000 });
-      const saved = res.data?.savedNew || 0;
-      totalSaved += saved;
-      console.log(`[Scheduler]   FB ${q.category}: +${saved} new ads`);
-    } catch (e) {
-      errors++;
-      console.warn(`[Scheduler]   FB ${q.category} error: ${e.message}`);
-    }
-    await new Promise(r => setTimeout(r, 5000));
+  if (fbJobRunning) {
+    console.log('[Scheduler] FB Ads job already running — skipping this tick.');
+    return;
   }
-  schedulerStatus.facebookAds = {
-    lastRun:    new Date().toISOString(),
-    lastResult: { totalSaved, errors },
-  };
-  try { globalThis.__trendspyIO?.emit('schedulerRan', { scraper: 'facebookAds', totalSaved, errors }); } catch { /* best-effort */ }
-  console.log(`[Scheduler] FB Ads job done. saved=${totalSaved} errors=${errors}`);
+  fbJobRunning = true;
+  try {
+    console.log('[Scheduler] FB Ads job starting...');
+    let totalSaved = 0; let errors = 0;
+    for (const q of FB_ADS_QUERIES) {
+      try {
+        const res = await axios.post(`${SELF_API()}/api/ads/refresh`, q, { timeout: 90000 });
+        const saved = res.data?.savedNew || 0;
+        totalSaved += saved;
+        console.log(`[Scheduler]   FB ${q.category}: +${saved} new ads`);
+      } catch (e) {
+        errors++;
+        console.warn(`[Scheduler]   FB ${q.category} error: ${e.message}`);
+      }
+      await new Promise(r => setTimeout(r, 5000));
+    }
+    schedulerStatus.facebookAds = {
+      lastRun:    new Date().toISOString(),
+      lastResult: { totalSaved, errors },
+    };
+    try { globalThis.__trendspyIO?.emit('schedulerRan', { scraper: 'facebookAds', totalSaved, errors }); } catch { /* best-effort */ }
+    console.log(`[Scheduler] FB Ads job done. saved=${totalSaved} errors=${errors}`);
+  } finally {
+    fbJobRunning = false;
+  }
 }
 
 // ── Daraz scraper job ────────────────────────────────────────────────────────
